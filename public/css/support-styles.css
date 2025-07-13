@@ -1,0 +1,379 @@
+/* Support-specific styles */
+.support-header {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--gray-200);
+  padding: var(--spacing-4);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.header-spacer {
+  width: 40px;
+}
+
+.support-main {
+  flex: 1;
+  padding: var(--spacing-4);
+  max-width: 400px;
+  margin: 0 auto;
+  padding-bottom: var(--spacing-16);
+}
+
+.section-title {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--gray-800);
+  margin-bottom: var(--spacing-4);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+.section-title svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Emergency Section */
+.emergency-section {
+  margin-bottom: var(--spacing-8);
+}
+
+.emergency-header {
+  text-align: center;
+  margin-bottom: var(--spacing-6);
+}
+
+.emergency-title {
+  color: var(--primary-pink);
+  justify-content: center;
+  font-size: var(--font-size-xl);
+}
+
+.emergency-description {
+  font-size: var(--font-size-sm);
+  color: var(--gray-600);
+  line-height: 1.5;
+}
+
+.emergency-contacts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+
+.contact-card {
+  background: var(--white);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-4);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--gray-200);
+  transition: all var(--transition-normal);
+}
+
+.contact-card.urgent {
+  border-color: var(--primary-pink);
+  background: linear-gradient(135deg, #fff5f5, #ffffff);
+}
+
+.contact-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.contact-info {
+  flex: 1;
+}
+
+.contact-name {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--gray-800);
+  margin-bottom: var(--spacing-1);
+}
+
+.contact-description {
+  font-size: var(--font-size-sm);
+  color: var(--gray-600);
+}
+
+.contact-button {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-3) var(--spacing-4);
+  background: var(--primary-pink);
+  color: var(--white);
+  text-decoration: none;
+  border-radius: var(--radius-lg);
+  font-weight: 500;
+  font-size: var(--font-size-sm);
+  transition: all var(--transition-fast);
+}
+
+.contact-button:hover {
+  background: #e11d48;
+  transform: scale(1.05);
+}
+
+.contact-button svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Resources Section */
+.resources-section {
+  margin-bottom: var(--spacing-8);
+}
+
+.resources-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-3);
+}
+
+.resource-card {
+  background: var(--white);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--gray-200);
+  transition: all var(--transition-normal);
+}
+
+.resource-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.resource-card.technique {
+  border-color: var(--primary-blue);
+}
+
+.resource-card.resource {
+  border-color: var(--primary-purple);
+}
+
+.resource-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--spacing-3);
+}
+
+.technique .resource-icon {
+  background: var(--gradient-card-blue);
+}
+
+.resource .resource-icon {
+  background: var(--gradient-card-purple);
+}
+
+.resource-icon svg {
+  width: 24px;
+  height: 24px;
+  color: var(--white);
+}
+
+.resource-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.resource-title {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--gray-800);
+  margin-bottom: var(--spacing-2);
+}
+
+.resource-description {
+  font-size: var(--font-size-sm);
+  color: var(--gray-600);
+  line-height: 1.4;
+  margin-bottom: var(--spacing-3);
+  flex: 1;
+}
+
+.resource-button {
+  padding: var(--spacing-2) var(--spacing-4);
+  background: var(--gray-100);
+  border: none;
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--gray-700);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.resource-button:hover {
+  background: var(--gray-200);
+  transform: scale(1.05);
+}
+
+/* Self-Care Section */
+.selfcare-section {
+  margin-bottom: var(--spacing-8);
+}
+
+.selfcare-tips {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+
+.tip-card {
+  background: var(--white);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-4);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--gray-200);
+  transition: all var(--transition-normal);
+}
+
+.tip-card:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.tip-icon {
+  font-size: 24px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gray-50);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tip-text {
+  font-size: var(--font-size-sm);
+  color: var(--gray-700);
+  line-height: 1.4;
+  margin: 0;
+}
+
+/* Breathing Exercise Modal */
+.breathing-content {
+  max-width: 350px;
+}
+
+.breathing-guide {
+  text-align: center;
+}
+
+.breathing-circle {
+  width: 200px;
+  height: 200px;
+  border: 4px solid var(--primary-blue);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--spacing-6);
+  transition: all ease-in-out;
+  position: relative;
+}
+
+.breathing-circle.inhale {
+  transform: scale(1.3);
+  background: rgba(78, 205, 196, 0.1);
+}
+
+.breathing-circle.hold {
+  transform: scale(1.3);
+  background: rgba(78, 205, 196, 0.2);
+}
+
+.breathing-circle.exhale {
+  transform: scale(1);
+  background: rgba(78, 205, 196, 0.05);
+}
+
+.breathing-text {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--primary-blue);
+}
+
+.breathing-instructions {
+  text-align: left;
+  margin-bottom: var(--spacing-6);
+}
+
+.breathing-instructions p {
+  font-weight: 500;
+  margin-bottom: var(--spacing-2);
+}
+
+.breathing-instructions ul {
+  list-style: none;
+  padding: 0;
+}
+
+.breathing-instructions li {
+  padding: var(--spacing-1) 0;
+  font-size: var(--font-size-sm);
+  color: var(--gray-600);
+}
+
+.breathing-instructions li::before {
+  content: "• ";
+  color: var(--primary-blue);
+  font-weight: bold;
+}
+
+/* Mobile Responsive */
+@media (max-width: 480px) {
+  .resources-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-3);
+  }
+
+  .contact-card {
+    flex-direction: column;
+    text-align: center;
+    gap: var(--spacing-3);
+  }
+
+  .contact-button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .breathing-circle {
+    width: 150px;
+    height: 150px;
+  }
+}
+
+@media (max-width: 360px) {
+  .support-main {
+    padding: var(--spacing-3);
+  }
+
+  .resource-card,
+  .contact-card,
+  .tip-card {
+    padding: var(--spacing-3);
+  }
+}

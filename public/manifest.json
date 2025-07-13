@@ -1,0 +1,16 @@
+{
+  "name": "Just Let It Out",
+  "short_name": "LetItOut",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#E8F4FD",
+  "theme_color": "#E8F4FD",
+  "description": "Anonymous, real-time, mobile-first group chat for mental health support.",
+  "icons": [
+    {
+      "src": "favicon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}

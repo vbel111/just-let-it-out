@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q&A - Just Let It Out</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/qa-styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <header class="header">
+            <div class="header-content">
+                <button class="back-button" onclick="window.location.href='index.html'">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="32" height="32">
+                        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                    </svg>
+                </button>
+                <h1 class="page-title">Anonymous Q&A</h1>
+                <button class="share-link-btn" id="shareLinkBtn">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                        <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92S19.61 16.08 18 16.08z"/>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <main class="main-content qa-main">
+            <!-- User Profile Card -->
+            <section class="qa-profile-card">
+                <div class="qa-avatar-container">
+                    <img id="qaAvatar" src="" alt="Your Avatar" class="qa-avatar"/>
+                    <div class="qa-status-indicator"></div>
+                </div>
+                <div class="qa-profile-info">
+                    <h2 id="qaUsername" class="qa-username">@username</h2>
+                    <p class="qa-tagline">Ask me anything anonymously!</p>
+                    <div class="qa-stats">
+                        <span class="qa-stat">
+                            <span id="questionsReceived" class="qa-stat-number">0</span>
+                            <span class="qa-stat-label">Questions</span>
+                        </span>
+                        <span class="qa-stat">
+                            <span id="answersGiven" class="qa-stat-number">0</span>
+                            <span class="qa-stat-label">Answers</span>
+                        </span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Share Your Link Section -->
+            <section class="share-section">
+                <h3>Share Your Q&A Link</h3>
+                <div class="share-link-container">
+                    <div class="share-link-display">
+                        <input type="text" id="shareLink" readonly class="share-link-input" placeholder="Generating your link..."/>
+                        <button id="copyLinkBtn" class="copy-btn">
+                            <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                                <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="social-share-buttons">
+                        <button class="social-btn instagram-btn" id="shareInstagram">
+                            <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                            </svg>
+                            Instagram Story
+                        </button>
+                        <button class="social-btn twitter-btn" id="shareTwitter">
+                            <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                                <path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"/>
+                            </svg>
+                            Twitter
+                        </button>
+                        <button class="social-btn snapchat-btn" id="shareSnapchat">
+                            <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                                <path d="M12.017 0C5.396 0 .029 5.367.029 11.987c0 5.079 3.158 9.417 7.618 11.174-.105-.949-.199-2.403.041-3.439.219-.937 1.404-5.965 1.404-5.965s-.359-.719-.359-1.782c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.688 0 1.029-.653 2.567-.992 3.992-.285 1.193.6 2.165 1.775 2.165 2.128 0 3.768-2.245 3.768-5.487 0-2.861-2.063-4.869-5.008-4.869-3.41 0-5.409 2.562-5.409 5.199 0 1.033.394 2.143.889 2.741.099.12.112.225.085.345-.09.375-.293 1.199-.334 1.363-.053.225-.172.271-.402.165-1.495-.69-2.433-2.878-2.433-4.646 0-3.776 2.748-7.252 7.92-7.252 4.158 0 7.392 2.967 7.392 6.923 0 4.135-2.607 7.462-6.233 7.462-1.214 0-2.357-.629-2.75-1.378l-.748 2.853c-.271 1.043-1.002 2.35-1.492 3.146C9.57 23.812 10.763 24.009 12.017 24c6.624 0 11.99-5.367 11.99-11.988C24.007 5.367 18.641.001 12.017.001z"/>
+                            </svg>
+                            Snapchat
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Questions Feed -->
+            <section class="questions-section">
+                <div class="section-header">
+                    <h3>Recent Questions</h3>
+                    <div class="filter-tabs">
+                        <button class="filter-tab active" data-filter="all">All</button>
+                        <button class="filter-tab" data-filter="unanswered">Unanswered</button>
+                        <button class="filter-tab" data-filter="answered">Answered</button>
+                    </div>
+                </div>
+                <div id="questionsFeed" class="questions-feed">
+                    <!-- Questions will be loaded here -->
+                </div>
+            </section>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="empty-state" style="display: none;">
+                <div class="empty-icon">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="64" height="64">
+                        <path d="M21 6h-2l-1.27-1.27A2 2 0 0 0 16.31 4H7.69a2 2 0 0 0-1.42.59L5 6H3a1 1 0 0 0 0 2h1v11a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V8h1a1 1 0 0 0 0-2zM12 16a4 4 0 1 1 4-4 4 4 0 0 1-4 4z"/>
+                    </svg>
+                </div>
+                <h3>No questions yet!</h3>
+                <p>Share your link on social media to start receiving anonymous questions.</p>
+            </div>
+        </main>
+
+        <!-- Question Answer Modal -->
+        <div id="answerModal" class="answer-modal" style="display: none;">
+            <div class="answer-modal-content">
+                <div class="answer-modal-header">
+                    <h3>Answer Question</h3>
+                    <button class="close-modal-btn" id="closeAnswerModal">
+                        <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="question-display">
+                    <p id="modalQuestionText">Question will appear here</p>
+                </div>
+                <div class="answer-input-section">
+                    <textarea id="answerTextarea" placeholder="Type your answer here..." maxlength="500"></textarea>
+                    <div class="answer-actions">
+                        <div class="character-count">
+                            <span id="answerCharCount">0</span>/500
+                        </div>
+                        <div class="answer-buttons">
+                            <button id="skipQuestionBtn" class="btn-secondary">Skip</button>
+                            <button id="submitAnswerBtn" class="btn-primary">Answer</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Share Story Modal for Social Media -->
+        <div id="shareStoryModal" class="share-story-modal" style="display: none;">
+            <div class="share-story-content">
+                <div class="story-canvas" id="storyCanvas">
+                    <div class="story-background">
+                        <div class="story-header">
+                            <img id="storyAvatar" src="" alt="Avatar" class="story-avatar"/>
+                            <div class="story-username-container">
+                                <span id="storyUsername" class="story-username">@username</span>
+                                <span class="story-app-name">Just Let It Out</span>
+                            </div>
+                        </div>
+                        <div class="story-content">
+                            <h2 class="story-title">Ask me anything!</h2>
+                            <p class="story-subtitle">Send me anonymous questions</p>
+                            <div class="story-qr-code">
+                                <div class="qr-placeholder">QR</div>
+                            </div>
+                        </div>
+                        <div class="story-footer">
+                            <span class="story-link" id="storyLink">justletitout.app/q/username</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="story-actions">
+                    <button id="downloadStoryBtn" class="btn-primary">Download</button>
+                    <button id="closeStoryModal" class="btn-secondary">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/qa.js"></script>
+</body>
+</html>

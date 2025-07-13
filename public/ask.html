@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ask Anonymous Question - Just Let It Out</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/ask-styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <header class="header">
+            <div class="header-content">
+                <button class="back-button" onclick="window.location.href='index.html'">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="32" height="32">
+                        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                    </svg>
+                </button>
+                <h1 class="page-title">Ask Question</h1>
+                <div class="header-spacer"></div>
+            </div>
+        </header>
+
+        <main class="main-content ask-main">
+            <!-- Loading State -->
+            <div id="loadingState" class="loading-state">
+                <div class="loading-spinner"></div>
+                <p>Loading...</p>
+            </div>
+
+            <!-- User Not Found State -->
+            <div id="userNotFoundState" class="error-state" style="display: none;">
+                <div class="error-icon">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="64" height="64">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                    </svg>
+                </div>
+                <h3>User Not Found</h3>
+                <p>This user doesn't exist or has not set up their Q&A profile yet.</p>
+                <button class="btn-primary" onclick="window.location.href='index.html'">
+                    Go to Homepage
+                </button>
+            </div>
+
+            <!-- Main Ask Content -->
+            <div id="askContent" class="ask-content" style="display: none;">
+                <!-- User Profile Card -->
+                <section class="recipient-profile">
+                    <div class="recipient-avatar-container">
+                        <img id="recipientAvatar" src="" alt="User Avatar" class="recipient-avatar"/>
+                        <div class="recipient-status-indicator"></div>
+                    </div>
+                    <div class="recipient-info">
+                        <h2 id="recipientUsername" class="recipient-username">@username</h2>
+                        <p class="recipient-tagline">Ask me anything anonymously!</p>
+                        <div class="recipient-stats">
+                            <span class="recipient-stat">
+                                <span id="recipientQuestions" class="recipient-stat-number">0</span>
+                                <span class="recipient-stat-label">Questions</span>
+                            </span>
+                            <span class="recipient-stat">
+                                <span id="recipientAnswers" class="recipient-stat-number">0</span>
+                                <span class="recipient-stat-label">Answers</span>
+                            </span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Question Form -->
+                <section class="question-form-section">
+                    <div class="question-form-header">
+                        <h3>Send Anonymous Question</h3>
+                        <p>Your identity will remain completely anonymous</p>
+                    </div>
+                    
+                    <form id="questionForm" class="question-form">
+                        <div class="form-group">
+                            <label for="questionTextarea" class="form-label">Your Question</label>
+                            <textarea 
+                                id="questionTextarea" 
+                                name="question" 
+                                placeholder="Ask anything you want to know..." 
+                                maxlength="500"
+                                required
+                            ></textarea>
+                            <div class="form-helper">
+                                <span class="character-count">
+                                    <span id="questionCharCount">0</span>/500
+                                </span>
+                                <span class="privacy-note">
+                                    <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+                                        <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
+                                    </svg>
+                                    100% Anonymous
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" id="submitQuestionBtn" class="btn-primary" disabled>
+                                <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                                    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                                </svg>
+                                Send Question
+                            </button>
+                        </div>
+                    </form>
+                </section>
+
+                <!-- Guidelines -->
+                <section class="guidelines-section">
+                    <h4>Community Guidelines</h4>
+                    <div class="guidelines-list">
+                        <div class="guideline-item">
+                            <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                            </svg>
+                            <span>Be respectful and kind</span>
+                        </div>
+                        <div class="guideline-item">
+                            <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                            </svg>
+                            <span>No harassment or hate speech</span>
+                        </div>
+                        <div class="guideline-item">
+                            <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                            </svg>
+                            <span>Keep questions appropriate</span>
+                        </div>
+                        <div class="guideline-item">
+                            <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                            </svg>
+                            <span>Your anonymity is protected</span>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Success State -->
+            <div id="successState" class="success-state" style="display: none;">
+                <div class="success-icon">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="64" height="64">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                    </svg>
+                </div>
+                <h3>Question Sent!</h3>
+                <p>Your anonymous question has been sent successfully. The user will be notified.</p>
+                <div class="success-actions">
+                    <button class="btn-primary" onclick="resetForm()">
+                        Send Another Question
+                    </button>
+                    <button class="btn-secondary" onclick="window.location.href='index.html'">
+                        Go to Homepage
+                    </button>
+                </div>
+            </div>
+        </main>
+
+        <!-- Report Modal -->
+        <div id="reportModal" class="report-modal" style="display: none;">
+            <div class="report-modal-content">
+                <div class="report-modal-header">
+                    <h3>Report User</h3>
+                    <button class="close-modal-btn" id="closeReportModal">
+                        <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="report-content">
+                    <p>If you believe this user is violating our community guidelines, please let us know.</p>
+                    <textarea id="reportReason" placeholder="Describe the issue..." maxlength="500"></textarea>
+                    <div class="report-actions">
+                        <button id="submitReportBtn" class="btn-primary">Submit Report</button>
+                        <button id="cancelReportBtn" class="btn-secondary">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/ask.js"></script>
+</body>
+</html>

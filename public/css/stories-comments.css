@@ -1,0 +1,119 @@
+.story-comments-section {
+  margin-top: 1.5rem;
+  background: #fff;
+  border-radius: 1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  padding: 1.25rem 1rem 1rem 1rem;
+}
+.story-comments-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #4f46e5;
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+}
+.story-comments-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.story-comment {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 1.1rem;
+  padding-bottom: 0.7rem;
+  border-bottom: 1px solid #f3f4f6;
+}
+.story-comment:last-child {
+  border-bottom: none;
+}
+.story-comment-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #e0e7ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #6366f1;
+}
+.story-comment-content {
+  flex: 1;
+}
+.story-comment-meta {
+  font-size: 0.85rem;
+  color: #a1a1aa;
+  margin-bottom: 0.15rem;
+  display: flex;
+  gap: 0.5em;
+}
+.story-comment-text {
+  font-size: 1rem;
+  color: #18181b;
+  margin-bottom: 0.2rem;
+}
+.story-comment-actions {
+  display: flex;
+  gap: 0.7em;
+  margin-top: 0.1rem;
+}
+.story-comment-reply-btn {
+  background: none;
+  border: none;
+  color: #6366f1;
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s;
+}
+.story-comment-reply-btn:hover {
+  color: #3730a3;
+}
+.story-comment-add {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7em;
+  margin-top: 1.1rem;
+}
+.story-comment-add textarea {
+  flex: 1;
+  border-radius: 0.7em;
+  border: 1px solid #e5e7eb;
+  padding: 0.7em 1em;
+  font-size: 1rem;
+  resize: vertical;
+  min-height: 2.4em;
+  max-height: 6em;
+  background: #f8fafc;
+  transition: border 0.2s;
+}
+.story-comment-add textarea:focus {
+  border: 1.5px solid #6366f1;
+  outline: none;
+  background: #fff;
+}
+.story-comment-add button {
+  background: #6366f1;
+  color: #fff;
+  border: none;
+  border-radius: 0.7em;
+  padding: 0.6em 1.3em;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.story-comment-add button:hover {
+  background: #4338ca;
+}
+.story-comment-thread {
+  margin-left: 2.2em;
+  margin-top: 0.5em;
+  border-left: 2px solid #e0e7ff;
+  padding-left: 1.1em;
+}

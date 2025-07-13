@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Just Let It Out - Anonymous Mental Health Platform</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo-container">
+                    <div class="heart-bubble">
+                        <svg class="heart-icon" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                        </svg>
+                    </div>
+                    <h1 class="app-title">Just Let It Out</h1>
+                </div>
+                <div class="user-status">
+    <button class="profile-btn" onclick="window.location.href='profile.html'" aria-label="Profile">
+        <svg viewBox="0 0 48 48" width="36" height="36" fill="none">
+            <circle cx="24" cy="24" r="22" fill="#ffe066" stroke="#fcd34d" stroke-width="4"/>
+            <circle cx="24" cy="20" r="8" fill="#fffde7"/>
+            <ellipse cx="24" cy="34" rx="12" ry="7" fill="#fffde7"/>
+        </svg>
+    </button>
+</div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="features-grid">
+                <!-- Pair Me Up Card -->
+                <div class="feature-card pair-up" data-feature="pair-up">
+                    <div class="card-icon">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M16 4c0-1.11.89-2 2-2s2 .89 2 2-.89 2-2 2-2-.89-2-2zm4 18v-6h2.5l-2.54-7.63A1.5 1.5 0 0 0 18.54 8H17c-.8 0-1.54.37-2.01.99l-2.54 3.38c-.35.47-.35 1.1 0 1.57l2.54 3.38c.47.62 1.21.99 2.01.99h1.54c.69 0 1.32-.42 1.58-1.05L22 14v8h-2z M12 4c0-1.11-.89-2-2-2s-2 .89-2 2 .89 2 2 2 2-.89 2-2zM8 18v-6H5.5l2.54-7.63A1.5 1.5 0 0 1 9.46 8h1.27c.8 0 1.54.37 2.01.99l2.54 3.38c.35.47.35 1.1 0 1.57l-2.54 3.38c-.47.62-1.21.99-2.01.99H9.46c-.69 0-1.32-.42-1.58-1.05L6 14v4H4V8H1.5L4 5.37z"/>
+                        </svg>
+                    </div>
+                    <h2 class="card-title">Pair Me Up</h2>
+                    <p class="card-description">Connect with a stranger for anonymous 1-on-1 chat</p>
+                </div>
+
+                <!-- Anonymous Stories Card -->
+                <div class="feature-card anonymous-stories" data-feature="stories">
+                    <div class="card-icon">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M14 17H4v2h10v-2zm6-8H4v2h16V9zM4 15h16v-2H4v2zM4 5v2h16V5H4z"/>
+                        </svg>
+                    </div>
+                    <h2 class="card-title">Anonymous Stories</h2>
+                    <p class="card-description">Share your experiences safely</p>
+                </div>
+
+                <!-- Anonymous Q&A Card -->
+                <div class="feature-card send-message featured" data-feature="send-message">
+                    <div class="card-icon">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M21 6h-2l-1.27-1.27A2 2 0 0 0 16.31 4H7.69a2 2 0 0 0-1.42.59L5 6H3a1 1 0 0 0 0 2h1v11a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V8h1a1 1 0 0 0 0-2zM12 16a4 4 0 1 1 4-4 4 4 0 0 1-4 4z"/>
+                            <path d="M12 10a2 2 0 1 0 2 2 2 2 0 0 0-2-2z"/>
+                        </svg>
+                    </div>
+                    <h2 class="card-title">Anonymous Q&A</h2>
+                    <p class="card-description">Share your link • Get questions • </p>
+                    <div class="card-badge">Popular</div>
+                </div>
+
+                <!-- Mental Health Support Card -->
+                <div class="feature-card mental-health" data-feature="support">
+                    <div class="card-icon">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                            <circle cx="12" cy="8" r="2" fill="white"/>
+                        </svg>
+                    </div>
+                    <h2 class="card-title">Mental Health Support</h2>
+                    <p class="card-description">Find resources and help</p>
+                </div>
+            </div>
+
+            <!-- Floating Action Button -->
+            <button class="fab" id="fabButton" aria-label="Quick post">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                </svg>
+            </button>
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <button class="nav-item active" data-nav="home">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+                </svg>
+                <span>Home</span>
+            </button>
+            <button class="nav-item" data-nav="chat">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h4l4 4 4-4h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
+                    <circle cx="12" cy="11" r="1" fill="white"/>
+                </svg>
+                <span>Chat</span>
+            </button>
+        </nav>
+
+        <!-- Loading Overlay -->
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="loading-spinner">
+                <div class="spinner-ring"></div>
+                <p>Connecting...</p>
+            </div>
+        </div>
+
+        <!-- Quick Post Modal -->
+        <div class="modal-overlay" id="quickPostModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Quick Anonymous Post</h3>
+                    <button class="modal-close" id="closeQuickPost">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <textarea id="quickPostText" placeholder="Share what's on your mind... (anonymous)" maxlength="500"></textarea>
+                    <div class="character-count">
+                        <span id="charCount">0</span>/500
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-secondary" id="cancelQuickPost">Cancel</button>
+                    <button class="btn-primary" id="submitQuickPost">Post Anonymously</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module" src="./js/firebase-config.js"></script>
+    <script type="module" src="./js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+{
+  "rules": {
+    "chatRooms": {
+      "$roomId": {
+        "messages": {
+          ".read": "auth != null",
+          ".write": "auth != null",
+          ".indexOn": ["timestamp"],
+          "$messageId": {
+            ".validate": "newData.hasChildren(['text', 'userId', 'timestamp']) && newData.child('text').isString() && newData.child('userId').isString()"
+          }
+        },
+        "participants": {
+          ".read": "auth != null",
+          ".write": "auth != null"
+        }
+      }
+    },
+    "rooms": {
+      "$roomId": {
+        "messages": {
+          ".read": "auth != null",
+          ".write": "auth != null",
+          ".indexOn": ["timestamp"],
+          "$messageId": {
+            ".validate": "newData.hasChildren(['text', 'userId', 'timestamp']) && newData.child('text').isString() && newData.child('userId').isString()"
+          }
+        }
+      }
+    },
+    "pair_queue": {
+      ".read": "auth != null",
+      "$uid": {
+        ".write": "auth != null && (auth.uid === $uid || (newData.child('partner').val() === auth.uid))"
+      }
+    },
+    "private_chats": {
+      "$roomId": {
+        ".read": "auth != null && data.child('participants').hasChild(auth.uid)",
+        ".write": "auth != null && (!data.exists() || data.child('participants').hasChild(auth.uid))",
+        ".validate": "newData.hasChildren(['roomId', 'participants'])"
+      }
+    }
+  }
+}

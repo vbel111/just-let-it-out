@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mental Health Support - Just Let It Out</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/support-styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="support-header">
+            <div class="header-content">
+                <button class="back-button" onclick="window.location.href='index.html'">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                    </svg>
+                </button>
+                <h1 class="page-title">Mental Health Support</h1>
+                <div class="header-spacer"></div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="support-main">
+            <!-- Emergency Section -->
+            <section class="emergency-section">
+                <div class="emergency-header">
+                    <h2 class="section-title emergency-title">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                        </svg>
+                        Crisis Support
+                    </h2>
+                    <p class="emergency-description">If you're in crisis, please reach out immediately. You're not alone.</p>
+                </div>
+                
+                <div class="emergency-contacts">
+                    <div class="contact-card urgent">
+                        <div class="contact-info">
+                            <h3 class="contact-name">National Suicide Prevention Lifeline</h3>
+                            <p class="contact-description">24/7 crisis support</p>
+                        </div>
+                        <a href="tel:988" class="contact-button">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
+                            </svg>
+                            Call 988
+                        </a>
+                    </div>
+
+                    <div class="contact-card">
+                        <div class="contact-info">
+                            <h3 class="contact-name">Crisis Text Line</h3>
+                            <p class="contact-description">24/7 text-based crisis support</p>
+                        </div>
+                        <a href="sms:741741?body=HOME" class="contact-button">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h4l4 4 4-4h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
+                            </svg>
+                            Text HOME to 741741
+                        </a>
+                    </div>
+
+                    <div class="contact-card">
+                        <div class="contact-info">
+                            <h3 class="contact-name">SAMHSA National Helpline</h3>
+                            <p class="contact-description">Treatment referral and information service</p>
+                        </div>
+                        <a href="tel:1-800-662-4357" class="contact-button">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
+                            </svg>
+                            Call 1-800-662-4357
+                        </a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Resources Section -->
+            <section class="resources-section">
+                <h2 class="section-title">Mental Health Resources</h2>
+                
+                <div class="resources-grid">
+                    <div class="resource-card technique">
+                        <div class="resource-icon">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                            </svg>
+                        </div>
+                        <div class="resource-content">
+                            <h3 class="resource-title">Breathing Exercises</h3>
+                            <p class="resource-description">Simple techniques to manage anxiety and stress</p>
+                            <button class="resource-button" data-resource="breathing">Try Now</button>
+                        </div>
+                    </div>
+
+                    <div class="resource-card technique">
+                        <div class="resource-icon">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                            </svg>
+                        </div>
+                        <div class="resource-content">
+                            <h3 class="resource-title">Mindfulness Meditation</h3>
+                            <p class="resource-description">Guided practices for mental wellness</p>
+                            <button class="resource-button" data-resource="meditation">Start Session</button>
+                        </div>
+                    </div>
+
+                    <div class="resource-card resource">
+                        <div class="resource-icon">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                            </svg>
+                        </div>
+                        <div class="resource-content">
+                            <h3 class="resource-title">Professional Help Finder</h3>
+                            <p class="resource-description">Find mental health professionals in your area</p>
+                            <button class="resource-button" data-resource="finder">Find Help</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Self-Care Section -->
+            <section class="selfcare-section">
+                <h2 class="section-title">Daily Self-Care</h2>
+                <div class="selfcare-tips">
+                    <div class="tip-card">
+                        <div class="tip-icon">🌱</div>
+                        <p class="tip-text">Take 5 minutes today to practice deep breathing</p>
+                    </div>
+                    <div class="tip-card">
+                        <div class="tip-icon">💧</div>
+                        <p class="tip-text">Stay hydrated - your brain needs water to function well</p>
+                    </div>
+                    <div class="tip-card">
+                        <div class="tip-icon">☀️</div>
+                        <p class="tip-text">Get some sunlight or fresh air, even if just for a few minutes</p>
+                    </div>
+                    <div class="tip-card">
+                        <div class="tip-icon">💝</div>
+                        <p class="tip-text">Be kind to yourself - you're doing the best you can</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Breathing Exercise Modal -->
+        <div class="modal-overlay" id="breathingModal">
+            <div class="modal-content breathing-content">
+                <div class="modal-header">
+                    <h3>4-7-8 Breathing Exercise</h3>
+                    <button class="modal-close" id="closeBreathing">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="breathing-guide">
+                        <div class="breathing-circle" id="breathingCircle">
+                            <div class="breathing-text" id="breathingText">Get Ready</div>
+                        </div>
+                        <div class="breathing-instructions">
+                            <p>Follow the circle and breathe:</p>
+                            <ul>
+                                <li>Inhale for 4 seconds</li>
+                                <li>Hold for 7 seconds</li>
+                                <li>Exhale for 8 seconds</li>
+                            </ul>
+                        </div>
+                        <button class="btn-primary" id="startBreathing">Start Exercise</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <button class="nav-item" data-nav="home" onclick="window.location.href='index.html'">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+                </svg>
+                <span>Home</span>
+            </button>
+            <button class="nav-item" data-nav="chat" onclick="window.location.href='chat.html'">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h4l4 4 4-4h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
+                    <circle cx="12" cy="11" r="1" fill="white"/>
+                </svg>
+                <span>Chat</span>
+            </button>
+        </nav>
+    </div>
+
+    <script type="module" src="./js/firebase-config.js"></script>
+    <script type="module" src="./js/support.js"></script>
+</body>
+</html>

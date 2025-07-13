@@ -1,0 +1,67 @@
+{
+  "rules": {
+    "chatRooms": {
+      "$roomId": {
+        "messages": {
+          ".read": "auth != null",
+          ".write": "auth != null",
+          ".indexOn": ["timestamp"],
+          "$messageId": {
+            ".validate": "newData.hasChildren(['text', 'userId', 'timestamp']) && newData.child('text').isString() && newData.child('userId').isString()"
+          }
+        },
+        "participants": {
+          ".read": "auth != null",
+          ".write": "auth != null"
+        }
+      }
+    },
+    "rooms": {
+      "$roomId": {
+        "messages": {
+          ".read": "auth != null",
+          ".write": "auth != null",
+          ".indexOn": ["timestamp"],
+          "$messageId": {
+            ".validate": "newData.hasChildren(['text', 'userId', 'timestamp']) && newData.child('text').isString() && newData.child('userId').isString()"
+          }
+        }
+      }
+    },
+    "pair_queue": {
+      "$userId": {
+        ".read": "auth != null",
+        ".write": "auth != null && $userId == auth.uid",
+        ".validate": "newData.hasChildren(['uid', 'timestamp', 'status']) && newData.child('uid').val() == auth.uid"
+      }
+    },
+    "private_chats": {
+      "$roomId": {
+        ".read": "auth != null && (data.child('participants').child(auth.uid).exists() || !data.exists())",
+        ".write": "auth != null && (data.child('participants').child(auth.uid).exists() || !data.exists())",
+        "participants": {
+          "$userId": {
+            ".validate": "newData.hasChildren(['role', 'status', 'joinedAt'])"
+          }
+        },
+        "messages": {
+          ".indexOn": ["timestamp"],
+          "$messageId": {
+            ".validate": "newData.hasChildren(['text', 'from', 'fromUid', 'timestamp']) && newData.child('fromUid').val() == auth.uid"
+          }
+        },
+        "typing": {
+          "$userId": {
+            ".write": "$userId == auth.uid"
+          }
+        }
+      }
+    },
+    "reports": {
+      "$reportId": {
+        ".write": "auth != null",
+        ".validate": "newData.hasChildren(['roomId', 'reportedUser', 'reporterUser', 'reason', 'timestamp']) && newData.child('reporterUser').val() == auth.uid"
+      }
+    }
+  }
+}
