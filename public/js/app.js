@@ -318,9 +318,9 @@ class JustLetItOutApp {
     window.location.href = "index.html"
   }
 
-  navigateToChat() {
-    console.log("Navigating to Chat")
-    window.location.href = "chat.html"
+   navigateToChat() {
+    console.log("Chat feature coming soon")
+    this.showComingSoon("Chat")
   }
 
   // Modal methods
