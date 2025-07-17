@@ -93,25 +93,31 @@ body {
 
 /* Header Styles */
 .header {
-  padding: var(--spacing-4) var(--spacing-4) var(--spacing-6);
-  position: relative;
-  z-index: 10;
-  flex-shrink: 0;
+  width: 100vw;
+  padding: var(--spacing-3) var(--spacing-3) var(--spacing-5);
+  background: transparent;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
 }
 
 .header-content {
   display: flex;
+  flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  max-width: 400px;
-  margin: 0 auto;
+  width: 100vw;
+  max-width: 100vw;
+  margin: 0;
+  padding: 0 var(--spacing-3);
 }
 
 .logo-container {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: var(--spacing-3);
+  gap: var(--spacing-2);
 }
 
 .heart-bubble {
@@ -143,19 +149,28 @@ body {
   width: 28px;
   height: 28px;
   color: var(--white);
+  animation: heart-pulse 1.2s infinite;
 }
 
 .app-title {
-  font-size: var(--font-size-3xl);
-  font-weight: 700;
-  color: var(--gray-800);
-  text-align: center;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  font-size: var(--font-size-4xl);
+  font-weight: 800;
+  color: #22223b;
+  text-align: left;
+  margin-left: var(--spacing-2);
+  letter-spacing: 1px;
+  text-shadow:
+    0 2px 8px rgba(78, 205, 196, 0.18),
+    0 1px 2px rgba(168, 85, 247, 0.10);
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 .user-status {
   display: flex;
   align-items: center;
+  position: static;
+  top: unset;
+  margin-left: auto;
 }
 
 .profile-btn {
@@ -168,6 +183,8 @@ body {
   justify-content: center;
   transition: all var(--transition-fast);
   border-radius: 50%;
+  width: 48px;
+  height: 48px;
 }
 
 .profile-btn:hover {
@@ -218,6 +235,17 @@ body {
   50% {
     opacity: 0.5;
     transform: scale(0.8);
+  }
+}
+
+@keyframes heart-pulse {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 8px #ff8fa3);
+  }
+  50% {
+    transform: scale(1.18);
+    filter: drop-shadow(0 0 16px #ff6b9d);
   }
 }
 
@@ -998,7 +1026,7 @@ body {
     width: 100vw;
   }
   .header {
-    padding: var(--spacing-3) var(--spacing-3) var(--spacing-5);
+    padding: var(--spacing-2) var(--spacing-3) var(--spacing-3); /* Reduced bottom padding */
     display: flex;
     flex-direction: column;
     align-items: center;
