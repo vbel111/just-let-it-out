@@ -106,11 +106,12 @@ body {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   width: 100vw;
   max-width: 100vw;
   margin: 0;
   padding: 0 var(--spacing-3);
+  position: relative;
 }
 
 .logo-container {
@@ -153,16 +154,21 @@ body {
 }
 
 .app-title {
+  position: absolute;
+  left: 50%;
+  top: 25px;
+  transform: translateX(-50%);
   font-size: var(--font-size-4xl);
   font-weight: 800;
   color: #22223b;
-  text-align: left;
-  margin-left: var(--spacing-2);
+  text-align: center;
   letter-spacing: 1px;
   text-shadow:
     0 2px 8px rgba(78, 205, 196, 0.18),
     0 1px 2px rgba(168, 85, 247, 0.10);
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  opacity: 0;
+  animation: title-fade-in 1s ease-out forwards;
 }
 
 .user-status {
@@ -246,6 +252,17 @@ body {
   50% {
     transform: scale(1.18);
     filter: drop-shadow(0 0 16px #ff6b9d);
+  }
+}
+
+@keyframes title-fade-in {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-20px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
   }
 }
 
@@ -1033,8 +1050,10 @@ body {
     justify-content: center;
   }
   .app-title {
-    font-size: var(--font-size-2xl);
+    font-size: 1.76rem;
     text-align: center;
+    position: absolute;
+    top: 100px;
   }
   .heart-bubble {
     width: 50px;
