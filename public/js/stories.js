@@ -1401,7 +1401,114 @@ style.textContent = `
         }
     }
 `;
+// ...existing code...
+
+// --- Story Sharing Feature ---
+
+window.shareStoryAsImage = async function(storyId) {
+  // Find story data
+  const storyCard = document.querySelector(`[data-story-id="${storyId}"]`);
+  if (!storyCard) return;
+
+  const storyText = storyCard.querySelector('.story-text')?.textContent || '';
+  const storyTags = Array.from(storyCard.querySelectorAll('.story-tag')).map(tag => tag.textContent).join(' ');
+  const time = storyCard.querySelector('.story-time')?.textContent || '';
+
+  // Generate image (simple canvas)
+  const canvas = document.createElement('canvas');
+  canvas.width = 600;
+  canvas.height = 400;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.font = "bold 22px Inter, sans-serif";
+  ctx.fillStyle = "#a855f7";
+  ctx.fillText("Anonymous Story", 30, 50);
+  ctx.font = "16px Inter, sans-serif";
+  ctx.fillStyle = "#374151";
+  ctx.fillText(storyText, 30, 100, 540);
+  ctx.font = "italic 14px Inter, sans-serif";
+  ctx.fillStyle = "#4ecdc4";
+  ctx.fillText(storyTags, 30, 350, 540);
+  ctx.font = "12px Inter, sans-serif";
+  ctx.fillStyle = "#6b7280";
+  ctx.fillText(time, 30, 380);
+
+  // Show preview modal
+  canvas.toBlob(blob => {
+    const url = URL.createObjectURL(blob);
+    document.getElementById('storySharePreviewImg').src = url;
+    window.currentStoryBlob = blob;
+    window.currentStoryImageUrl = url;
+    document.getElementById('storySharePreviewModal').style.display = 'flex';
+  }, 'image/png');
+};
+
+window.closeStorySharePreviewModal = function() {
+  document.getElementById('storySharePreviewModal').style.display = 'none';
+  if (window.currentStoryImageUrl) URL.revokeObjectURL(window.currentStoryImageUrl);
+};
+
+window.downloadStoryImage = function() {
+  if (!window.currentStoryBlob) return;
+  const url = URL.createObjectURL(window.currentStoryBlob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `story-${Date.now()}.png`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
+
+window.showStorySharingOptions = function() {
+  const container = document.getElementById('storySharingOptionsContainer');
+  if (container) container.style.display = 'block';
+};
+
+window.shareStoryToInstagram = function() {
+  window.downloadStoryImage();
+  alert('Image downloaded! Open Instagram and add it to your story.');
+};
+
+window.shareStoryToTwitter = function() {
+  window.downloadStoryImage();
+  window.open(`https://twitter.com/intent/tweet?text=Check out this anonymous story!`, '_blank');
+};
+
+window.shareStoryToFacebook = function() {
+  window.downloadStoryImage();
+  window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`, '_blank');
+};
+
+window.shareStoryToWhatsApp = function() {
+  window.downloadStoryImage();
+  window.open(`https://wa.me/?text=Check out this anonymous story!`, '_blank');
+};
+
+window.copyStoryImageToClipboard = async function() {
+  if (window.currentStoryBlob && navigator.clipboard && window.ClipboardItem) {
+    const clipboardItem = new ClipboardItem({ 'image/png': window.currentStoryBlob });
+    await navigator.clipboard.write([clipboardItem]);
+    alert('Story image copied to clipboard!');
+  } else {
+    window.downloadStoryImage();
+  }
+};
+
+// --- Add share button handler to each story card ---
+const originalCreateStoryElement = StoriesApp.prototype.createStoryElement;
+StoriesApp.prototype.createStoryElement = function(story) {
+  const article = originalCreateStoryElement.call(this, story);
+  // Find share button and override click
+  const shareBtn = article.querySelector('.share-btn');
+  if (shareBtn) {
+    shareBtn.onclick = () => window.shareStoryAsImage(story.id);
+  }
+  return article;
+};
 document.head.appendChild(style);
+
 
 // Initialize stories app
 document.addEventListener("DOMContentLoaded", () => {

@@ -276,6 +276,7 @@ function displayQuestions(questions) {
 }
 
 // Create Question Element
+
 function createQuestionElement(question) {
   const div = document.createElement('div');
   div.className = 'question-card';
@@ -292,8 +293,8 @@ function createQuestionElement(question) {
         </span>
         <span class="question-time">${timeAgo}</span>
       </div>
-      ${!isAnswered ? `
-        <div class="question-actions">
+      <div class="question-actions">
+        ${!isAnswered ? `
           <button class="action-btn answer-btn" onclick="openAnswerModal('${question.id}')">
             <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
               <path d="M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1.1 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"/>
@@ -304,8 +305,13 @@ function createQuestionElement(question) {
               <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
             </svg>
           </button>
-        </div>
-      ` : ''}
+        ` : ''}
+        <button class="action-btn share-btn" onclick="shareQuestionAsImage('${question.id}')">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+            <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/>
+          </svg>
+        </button>
+      </div>
     </div>
     <div class="question-content">
       <p class="question-text">${escapeHtml(question.text)}</p>
@@ -321,6 +327,274 @@ function createQuestionElement(question) {
   
   return div;
 }
+
+// Add new function to generate question image
+async function generateQuestionImage(questionData) {
+  try {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Set canvas size for social media (1080x1080 for Instagram)
+    canvas.width = 1080;
+    canvas.height = 1080;
+    
+    // Create gradient background
+    const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    gradient.addColorStop(0, '#667eea');
+    gradient.addColorStop(1, '#764ba2');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Add decorative elements
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+    ctx.beginPath();
+    ctx.arc(200, 200, 100, 0, 2 * Math.PI);
+    ctx.arc(880, 300, 80, 0, 2 * Math.PI);
+    ctx.arc(150, 800, 60, 0, 2 * Math.PI);
+    ctx.arc(900, 850, 90, 0, 2 * Math.PI);
+    ctx.fill();
+    
+    // Add avatar
+    const avatarSize = 120;
+    const avatarX = (canvas.width - avatarSize) / 2;
+    const avatarY = 150;
+    
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(avatarX + avatarSize/2, avatarY + avatarSize/2, avatarSize/2, 0, 2 * Math.PI);
+    ctx.fill();
+    
+    // Add username
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 48px Inter, Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(qaUsername.textContent, canvas.width / 2, avatarY + avatarSize + 60);
+    
+    // Add "Question" label
+    ctx.font = '36px Inter, Arial, sans-serif';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+    ctx.fillText('Question', canvas.width / 2, avatarY + avatarSize + 120);
+    
+    // Add question text with word wrapping
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 42px Inter, Arial, sans-serif';
+    ctx.textAlign = 'center';
+    
+    const questionText = questionData.text;
+    const maxWidth = canvas.width - 120;
+    const lineHeight = 60;
+    let y = 500;
+    
+    // Word wrap function
+    const wrapText = (text, maxWidth) => {
+      const words = text.split(' ');
+      const lines = [];
+      let currentLine = '';
+      
+      for (let word of words) {
+        const testLine = currentLine + word + ' ';
+        const testWidth = ctx.measureText(testLine).width;
+        
+        if (testWidth > maxWidth && currentLine !== '') {
+          lines.push(currentLine.trim());
+          currentLine = word + ' ';
+        } else {
+          currentLine = testLine;
+        }
+      }
+      lines.push(currentLine.trim());
+      return lines;
+    };
+    
+    const lines = wrapText(questionText, maxWidth);
+    
+    // Draw question text
+    lines.forEach((line, index) => {
+      ctx.fillText(line, canvas.width / 2, y + (index * lineHeight));
+    });
+    
+    // Add answer if exists
+    if (questionData.answered && questionData.answer && questionData.answer !== '[Skipped]') {
+      y += (lines.length * lineHeight) + 80;
+      
+      ctx.font = '32px Inter, Arial, sans-serif';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+      ctx.fillText('Answer', canvas.width / 2, y);
+      
+      y += 50;
+      ctx.font = '36px Inter, Arial, sans-serif';
+      ctx.fillStyle = 'white';
+      
+      const answerLines = wrapText(questionData.answer, maxWidth);
+      answerLines.forEach((line, index) => {
+        ctx.fillText(line, canvas.width / 2, y + (index * 50));
+      });
+    }
+    
+    // Add app branding at bottom
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+    ctx.font = '28px Inter, Arial, sans-serif';
+    ctx.fillText('Just Let It Out', canvas.width / 2, canvas.height - 80);
+    
+    ctx.font = '24px Inter, Arial, sans-serif';
+    ctx.fillText('Ask me anything anonymously', canvas.width / 2, canvas.height - 40);
+    
+    return canvas;
+  } catch (error) {
+    console.error('Error generating question image:', error);
+    throw error;
+  }
+}
+
+// Add function to share question as image
+window.shareQuestionAsImage = async function(questionId) {
+  try {
+    // Find question data
+    const questionCard = document.querySelector(`[data-question-id="${questionId}"]`);
+    if (!questionCard) {
+      showToast('Question not found', 'error');
+      return;
+    }
+    
+    const questionText = questionCard.querySelector('.question-text').textContent;
+    const answerElement = questionCard.querySelector('.answer-text');
+    const isAnswered = questionCard.querySelector('.question-status').textContent === 'Answered';
+    
+    const questionData = {
+      id: questionId,
+      text: questionText,
+      answered: isAnswered,
+      answer: answerElement ? answerElement.textContent : null
+    };
+    
+    showToast('Generating image...', 'info');
+    
+    // Generate image
+    const canvas = await generateQuestionImage(questionData);
+    
+    // Convert to blob
+    canvas.toBlob(async (blob) => {
+      try {
+        // Create download link
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `question-${questionId}-${Date.now()}.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        showToast('Question image downloaded!', 'success');
+        
+        // Show sharing options
+        showQuestionSharingOptions(blob, questionData);
+      } catch (error) {
+        console.error('Error processing image:', error);
+        showToast('Failed to process image', 'error');
+      }
+    }, 'image/png');
+    
+  } catch (error) {
+    console.error('Error sharing question:', error);
+    showToast('Failed to generate question image', 'error');
+  }
+};
+
+// Add function to show sharing options
+function showQuestionSharingOptions(blob, questionData) {
+  // Create sharing modal
+  const sharingModal = document.createElement('div');
+  sharingModal.className = 'modal-overlay';
+  sharingModal.id = 'questionSharingModal';
+  sharingModal.style.display = 'flex';
+  
+  sharingModal.innerHTML = `
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Share Question</h2>
+        <button class="close-btn" onclick="closeQuestionSharingModal()">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>Question image has been downloaded to your device.</p>
+        <div class="sharing-options">
+          <button class="share-option" onclick="shareToInstagramStory()">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="32" height="32">
+              <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073z"/>
+              <path d="M12 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+            </svg>
+            Instagram Story
+          </button>
+          <button class="share-option" onclick="shareToTwitterWithImage()">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="32" height="32">
+              <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+            </svg>
+            Twitter
+          </button>
+          <button class="share-option" onclick="copyQuestionImageToClipboard()">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="32" height="32">
+              <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+            </svg>
+            Copy to Clipboard
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(sharingModal);
+  
+  // Store blob for sharing functions
+  window.currentQuestionBlob = blob;
+  window.currentQuestionData = questionData;
+}
+
+// Add sharing functions
+window.closeQuestionSharingModal = function() {
+  const modal = document.getElementById('questionSharingModal');
+  if (modal) {
+    modal.remove();
+  }
+  window.currentQuestionBlob = null;
+  window.currentQuestionData = null;
+};
+
+window.shareToInstagramStory = function() {
+  showToast('Image downloaded! Open Instagram and add it to your story.', 'info');
+  closeQuestionSharingModal();
+};
+
+window.shareToTwitterWithImage = function() {
+  const text = `Check out this question from my Q&A! Ask me anything anonymously: ${shareLink.value}`;
+  const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
+  window.open(twitterUrl, '_blank');
+  showToast('Image downloaded! Attach it to your tweet.', 'info');
+  closeQuestionSharingModal();
+};
+
+window.copyQuestionImageToClipboard = async function() {
+  try {
+    if (window.currentQuestionBlob && navigator.clipboard && window.ClipboardItem) {
+      const clipboardItem = new ClipboardItem({
+        'image/png': window.currentQuestionBlob
+      });
+      await navigator.clipboard.write([clipboardItem]);
+      showToast('Question image copied to clipboard!', 'success');
+    } else {
+      showToast('Image has been downloaded to your device', 'info');
+    }
+    closeQuestionSharingModal();
+  } catch (error) {
+    console.error('Error copying to clipboard:', error);
+    showToast('Image has been downloaded to your device', 'info');
+    closeQuestionSharingModal();
+  }
+};
+
 
 // Open Answer Modal
 window.openAnswerModal = function(questionId) {

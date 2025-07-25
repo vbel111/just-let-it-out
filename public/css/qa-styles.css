@@ -709,3 +709,160 @@
   background: rgba(255, 255, 255, 0.2);
   color: var(--primary-purple);
 }
+
+.share-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.share-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.sharing-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.share-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.share-option:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+}
+
+.share-option svg {
+  opacity: 0.9;
+}
+
+#questionSharingModal .modal-content {
+  max-width: 500px;
+  width: 90%;
+}
+/* Add this to your CSS file */
+.question-preview-modal {
+  max-width: 600px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.image-preview-container {
+  text-align: center;
+  margin: 20px 0;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.question-preview-image {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+
+.preview-actions {
+  margin: 20px 0;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.social-share-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.social-share-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 12px;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 12px;
+  font-weight: 500;
+  color: white;
+}
+
+.social-share-option.instagram {
+  background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+}
+
+.social-share-option.twitter {
+  background: #1da1f2;
+}
+
+.social-share-option.snapchat {
+  background: #fffc00;
+  color: #000;
+}
+
+.social-share-option.facebook {
+  background: #1877f2;
+}
+
+.social-share-option.whatsapp {
+  background: #25d366;
+}
+
+.social-share-option.copy {
+  background: #6b7280;
+}
+
+.social-share-option:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.social-share-option svg {
+  opacity: 0.9;
+}
+
+.sharing-options h3 {
+  margin: 20px 0 12px 0;
+  font-size: 18px;
+  color: var(--text-primary);
+}
+
+@media (max-width: 768px) {
+  .social-share-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .question-preview-modal {
+    width: 95%;
+    margin: 20px;
+  }
+}
