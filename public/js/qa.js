@@ -714,6 +714,12 @@ function shareToTwitter() {
   window.open(twitterUrl, '_blank');
 }
 
+function shareToWhatsapp() {
+  const text = `Ask me anything anonymously! 💭✨ ${shareLink.value}`;
+  const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
+  window.open(whatsappUrl, '_blank');
+}
+
 function shareToSnapchat() {
   showToast('Generate your story image and share it on Snapchat!', 'info');
   shareToInstagram(); // Show story modal
@@ -931,6 +937,10 @@ function showToast(message, type = 'info') {
 copyLinkBtn.addEventListener('click', copyLink);
 shareInstagram.addEventListener('click', shareToInstagram);
 shareTwitter.addEventListener('click', shareToTwitter);
+
+const shareWhatsapp = document.getElementById('shareWhatsapp');
+shareWhatsapp.addEventListener('click', shareToWhatsapp);
+
 shareSnapchat.addEventListener('click', shareToSnapchat);
 shareLinkBtn.addEventListener('click', copyLink);
 closeAnswerModal.addEventListener('click', closeAnswerModalHandler);

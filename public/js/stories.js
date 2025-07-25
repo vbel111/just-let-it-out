@@ -13,6 +13,9 @@ class StoriesApp {
     this.userReactions = new Map(); // Track user reactions per story
     this.unsubscribeStories = null;
     this.unsubscribeUserLikes = null;
+    this.lastVisibleStory = null;
+    this.loadingMoreStories = false;
+    this.hasMoreStories = true;
     this.init();
   }
 
@@ -86,6 +89,16 @@ class StoriesApp {
 
     // Floating button scroll behavior
     this.setupFloatingButton();
+    // Infinite scroll for stories feed
+    window.addEventListener('scroll', () => {
+      const feed = document.getElementById('storiesFeed');
+      if (!feed) return;
+      const scrollPosition = window.innerHeight + window.scrollY;
+      const threshold = document.body.offsetHeight - 300;
+      if (scrollPosition >= threshold) {
+        this.loadMoreStories();
+      }
+    });
 
     // Close modal handlers
     [closeShareStory, cancelShareStory].forEach((btn) => {
@@ -179,63 +192,90 @@ class StoriesApp {
   loadStories() {
     try {
       this.showUIState('loading');
-      
-      // Set up real-time listener for stories
       const storiesQuery = firestoreQuery(
         collection(db, 'stories'),
         firestoreOrderBy('timestamp', 'desc'),
-        firestoreLimit(50)
+        firestoreLimit(20)
       );
-
-      this.unsubscribeStories = onSnapshot(storiesQuery, (snapshot) => {
+      getDocs(storiesQuery).then((snapshot) => {
         const stories = [];
         snapshot.forEach((doc) => {
           stories.push({ id: doc.id, ...doc.data() });
         });
-        
-        console.log('Loaded stories:', stories.length);
         this.stories = stories;
-        
+        this.lastVisibleStory = snapshot.docs[snapshot.docs.length - 1] || null;
+        this.hasMoreStories = snapshot.docs.length === 20;
         if (stories.length === 0) {
           this.showUIState('empty');
         } else {
           this.showUIState('stories');
           this.displayStories(stories);
         }
-      }, (error) => {
+      }).catch((error) => {
         console.error('Error loading stories:', error);
         this.showUIState('error');
       });
-
     } catch (error) {
       console.error('Error setting up stories listener:', error);
       this.showUIState('error');
     }
   }
 
+  async loadMoreStories() {
+    if (!this.hasMoreStories || this.loadingMoreStories || !this.lastVisibleStory) return;
+    this.loadingMoreStories = true;
+    const storiesQuery = firestoreQuery(
+      collection(db, 'stories'),
+      firestoreOrderBy('timestamp', 'desc'),
+      firestoreStartAfter(this.lastVisibleStory),
+      firestoreLimit(20)
+    );
+    try {
+      const snapshot = await getDocs(storiesQuery);
+      const newStories = [];
+      snapshot.forEach((doc) => {
+        newStories.push({ id: doc.id, ...doc.data() });
+      });
+      if (newStories.length > 0) {
+        this.stories = this.stories.concat(newStories);
+        this.displayStories(this.stories);
+        this.lastVisibleStory = snapshot.docs[snapshot.docs.length - 1];
+        this.hasMoreStories = newStories.length === 20;
+      } else {
+        this.hasMoreStories = false;
+      }
+    } catch (error) {
+      console.error('Error loading more stories:', error);
+    }
+    this.loadingMoreStories = false;
+  }
+
   displayStories(stories) {
     const feed = document.getElementById("storiesFeed");
     if (!feed) return;
 
-    // Clear existing stories (not state elements)
-    const existingStories = feed.querySelectorAll('.story-card[data-story-id]');
-    existingStories.forEach(story => story.remove());
+    // Clear existing stories (not state elements) only if this is the first page
+    if (feed.dataset.page !== 'appended') {
+      const existingStories = feed.querySelectorAll('.story-card[data-story-id]');
+      existingStories.forEach(story => story.remove());
+    }
+    feed.dataset.page = 'appended';
 
     // Add new stories
     stories.forEach((story, index) => {
-      const storyElement = this.createStoryElement(story);
-      
-      // Add with a slight delay for smooth appearance
-      setTimeout(() => {
-        feed.appendChild(storyElement);
-        storyElement.style.opacity = '0';
-        storyElement.style.transform = 'translateY(20px)';
-        requestAnimationFrame(() => {
-          storyElement.style.transition = 'all 0.3s ease';
-          storyElement.style.opacity = '1';
-          storyElement.style.transform = 'translateY(0)';
-        });
-      }, index * 50);
+      if (!feed.querySelector(`[data-story-id='${story.id}']`)) {
+        const storyElement = this.createStoryElement(story);
+        setTimeout(() => {
+          feed.appendChild(storyElement);
+          storyElement.style.opacity = '0';
+          storyElement.style.transform = 'translateY(20px)';
+          requestAnimationFrame(() => {
+            storyElement.style.transition = 'all 0.3s ease';
+            storyElement.style.opacity = '1';
+            storyElement.style.transform = 'translateY(0)';
+          });
+        }, index * 50);
+      }
     });
   }
 
@@ -1401,114 +1441,7 @@ style.textContent = `
         }
     }
 `;
-// ...existing code...
-
-// --- Story Sharing Feature ---
-
-window.shareStoryAsImage = async function(storyId) {
-  // Find story data
-  const storyCard = document.querySelector(`[data-story-id="${storyId}"]`);
-  if (!storyCard) return;
-
-  const storyText = storyCard.querySelector('.story-text')?.textContent || '';
-  const storyTags = Array.from(storyCard.querySelectorAll('.story-tag')).map(tag => tag.textContent).join(' ');
-  const time = storyCard.querySelector('.story-time')?.textContent || '';
-
-  // Generate image (simple canvas)
-  const canvas = document.createElement('canvas');
-  canvas.width = 600;
-  canvas.height = 400;
-  const ctx = canvas.getContext('2d');
-  ctx.fillStyle = "#fff";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.font = "bold 22px Inter, sans-serif";
-  ctx.fillStyle = "#a855f7";
-  ctx.fillText("Anonymous Story", 30, 50);
-  ctx.font = "16px Inter, sans-serif";
-  ctx.fillStyle = "#374151";
-  ctx.fillText(storyText, 30, 100, 540);
-  ctx.font = "italic 14px Inter, sans-serif";
-  ctx.fillStyle = "#4ecdc4";
-  ctx.fillText(storyTags, 30, 350, 540);
-  ctx.font = "12px Inter, sans-serif";
-  ctx.fillStyle = "#6b7280";
-  ctx.fillText(time, 30, 380);
-
-  // Show preview modal
-  canvas.toBlob(blob => {
-    const url = URL.createObjectURL(blob);
-    document.getElementById('storySharePreviewImg').src = url;
-    window.currentStoryBlob = blob;
-    window.currentStoryImageUrl = url;
-    document.getElementById('storySharePreviewModal').style.display = 'flex';
-  }, 'image/png');
-};
-
-window.closeStorySharePreviewModal = function() {
-  document.getElementById('storySharePreviewModal').style.display = 'none';
-  if (window.currentStoryImageUrl) URL.revokeObjectURL(window.currentStoryImageUrl);
-};
-
-window.downloadStoryImage = function() {
-  if (!window.currentStoryBlob) return;
-  const url = URL.createObjectURL(window.currentStoryBlob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `story-${Date.now()}.png`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-};
-
-window.showStorySharingOptions = function() {
-  const container = document.getElementById('storySharingOptionsContainer');
-  if (container) container.style.display = 'block';
-};
-
-window.shareStoryToInstagram = function() {
-  window.downloadStoryImage();
-  alert('Image downloaded! Open Instagram and add it to your story.');
-};
-
-window.shareStoryToTwitter = function() {
-  window.downloadStoryImage();
-  window.open(`https://twitter.com/intent/tweet?text=Check out this anonymous story!`, '_blank');
-};
-
-window.shareStoryToFacebook = function() {
-  window.downloadStoryImage();
-  window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`, '_blank');
-};
-
-window.shareStoryToWhatsApp = function() {
-  window.downloadStoryImage();
-  window.open(`https://wa.me/?text=Check out this anonymous story!`, '_blank');
-};
-
-window.copyStoryImageToClipboard = async function() {
-  if (window.currentStoryBlob && navigator.clipboard && window.ClipboardItem) {
-    const clipboardItem = new ClipboardItem({ 'image/png': window.currentStoryBlob });
-    await navigator.clipboard.write([clipboardItem]);
-    alert('Story image copied to clipboard!');
-  } else {
-    window.downloadStoryImage();
-  }
-};
-
-// --- Add share button handler to each story card ---
-const originalCreateStoryElement = StoriesApp.prototype.createStoryElement;
-StoriesApp.prototype.createStoryElement = function(story) {
-  const article = originalCreateStoryElement.call(this, story);
-  // Find share button and override click
-  const shareBtn = article.querySelector('.share-btn');
-  if (shareBtn) {
-    shareBtn.onclick = () => window.shareStoryAsImage(story.id);
-  }
-  return article;
-};
 document.head.appendChild(style);
-
 
 // Initialize stories app
 document.addEventListener("DOMContentLoaded", () => {
