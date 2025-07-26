@@ -79,8 +79,20 @@
 
 html, body {
   overflow-x: hidden;
+  overflow-y: hidden; /* Hide vertical scroll bar */
   width: 100%;
   max-width: 100%;
+  height: 100vh; /* Set to viewport height */
+}
+
+/* Hide scroll bars globally while keeping scroll functionality */
+::-webkit-scrollbar {
+  display: none; /* For WebKit browsers */
+}
+
+* {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
 }
 
 /* Prevent horizontal scroll globally */
@@ -111,23 +123,22 @@ div, section, article, aside, main, header, footer, nav {
 body {
   font-family: var(--font-family);
   background: var(--gradient-bg);
-  min-height: 100vh;
+  height: 100vh; /* Set to exact viewport height */
   color: var(--gray-800);
-  overflow-x: hidden;
+  overflow: hidden; /* Hide all scroll bars */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   margin: 0;
   padding: 0;
-  /* Remove flex centering to allow natural flow and scrolling */
 }
 
 .app-container {
-  min-height: 100vh;
+  height: 100vh; /* Set to exact viewport height */
   display: flex;
   flex-direction: column;
   width: 100%;
   max-width: 100%;
-  overflow-x: hidden;
+  overflow: hidden; /* Hide all scroll bars */
 }
 
 /* Header Styles */
