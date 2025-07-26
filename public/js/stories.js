@@ -11,11 +11,15 @@ class StoriesApp {
     this.stories = [];
     this.userLikes = new Set();
     this.userReactions = new Map(); // Track user reactions per story
+    this.userBookmarks = new Set(); // Track bookmarked stories
     this.unsubscribeStories = null;
     this.unsubscribeUserLikes = null;
+    this.unsubscribeUserBookmarks = null;
     this.lastVisibleStory = null;
     this.loadingMoreStories = false;
     this.hasMoreStories = true;
+    this.currentFilter = 'all'; // Track current filter
+    this.currentSort = 'newest'; // Track current sort
     this.init();
   }
 
@@ -40,6 +44,7 @@ class StoriesApp {
           console.log('User signed in:', user.uid);
           await this.loadUserLikes();
           await this.loadUserReactions();
+          await this.loadUserBookmarks();
           resolve(user);
         } else {
           console.log('No user signed in, signing in anonymously...');
@@ -49,6 +54,7 @@ class StoriesApp {
             console.log('Anonymous sign in successful:', result.user.uid);
             await this.loadUserLikes();
             await this.loadUserReactions();
+            await this.loadUserBookmarks();
             resolve(result.user);
           } catch (error) {
             console.error('Anonymous sign in failed:', error);
@@ -89,6 +95,8 @@ class StoriesApp {
 
     // Floating button scroll behavior
     this.setupFloatingButton();
+    // Pull to refresh for mobile
+    this.setupPullToRefresh();
     // Infinite scroll for stories feed
     window.addEventListener('scroll', () => {
       const feed = document.getElementById('storiesFeed');
@@ -138,6 +146,52 @@ class StoriesApp {
       });
     }
 
+    // Story templates
+    document.addEventListener("click", (e) => {
+      if (e.target.closest(".template-btn")) {
+        this.handleStoryTemplate(e.target.closest(".template-btn"));
+      }
+    });
+
+    // Filter and sort controls
+    const storyFilter = document.getElementById("storyFilter");
+    const storySort = document.getElementById("storySort");
+    const storySearch = document.getElementById("storySearch");
+    const clearSearch = document.getElementById("clearSearch");
+
+    if (storyFilter) {
+      storyFilter.addEventListener("change", (e) => {
+        this.currentFilter = e.target.value;
+        this.applyFiltersAndSort();
+      });
+    }
+
+    if (storySort) {
+      storySort.addEventListener("change", (e) => {
+        this.currentSort = e.target.value;
+        this.applyFiltersAndSort();
+      });
+    }
+
+    if (storySearch) {
+      let searchTimeout;
+      storySearch.addEventListener("input", (e) => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+          this.searchStories(e.target.value);
+        }, 300); // Debounce search
+      });
+    }
+
+    if (clearSearch) {
+      clearSearch.addEventListener("click", () => {
+        if (storySearch) {
+          storySearch.value = '';
+          this.searchStories('');
+        }
+      });
+    }
+
     // Story interactions
     document.addEventListener("click", (e) => {
       if (e.target.closest(".main-reaction-btn")) {
@@ -160,6 +214,15 @@ class StoriesApp {
       }
       if (e.target.closest(".share-btn")) {
         this.handleShare(e.target.closest(".share-btn"));
+      }
+      if (e.target.closest(".generate-image-btn")) {
+        this.handleGenerateImage(e.target.closest(".generate-image-btn"));
+      }
+      if (e.target.closest(".bookmark-btn")) {
+        this.handleBookmark(e.target.closest(".bookmark-btn"));
+      }
+      if (e.target.closest(".story-tag")) {
+        this.handleTagFilter(e.target.closest(".story-tag"));
       }
       
       // Close reaction options when clicking outside
@@ -286,6 +349,7 @@ class StoriesApp {
 
     // Get user reaction states
     const userReaction = this.userReactions.get(story.id);
+    const isBookmarked = this.userBookmarks.has(story.id);
     const reactionClasses = {
       like: userReaction === 'like' ? 'active' : '',
       love: userReaction === 'love' ? 'active' : '',
@@ -295,9 +359,13 @@ class StoriesApp {
     };
 
     article.innerHTML = `
-      <div class="story-content">
+      <div class="story-content" id="story-content-${story.id}">
         <p class="story-text">${this.escapeHtml(story.content)}</p>
         ${story.tags && story.tags.length > 0 ? `<div class="story-tags">${story.tags.map(tag => `<span class="story-tag">#${tag}</span>`).join('')}</div>` : ''}
+        <div class="story-meta">
+          <span class="reading-time">${this.getReadingTime(story.content)}</span>
+          <span class="story-length-indicator ${this.getStoryLengthClass(story.content)}"></span>
+        </div>
       </div>
       <div class="story-footer">
         <div class="story-reactions">
@@ -341,6 +409,16 @@ class StoriesApp {
           <button class="action-btn view-comments-btn" data-story-id="${story.id}" title="View Comments">
             <svg viewBox="0 0 24 24" fill="currentColor">
               <path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h4l4 4 4-4h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
+            </svg>
+          </button>
+          <button class="action-btn bookmark-btn ${isBookmarked ? 'active' : ''}" data-story-id="${story.id}" title="${isBookmarked ? 'Remove Bookmark' : 'Bookmark Story'}">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/>
+            </svg>
+          </button>
+          <button class="action-btn generate-image-btn" data-story-id="${story.id}" title="Generate Image">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M5 20h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2zm0-2V6h14v12H5zm2-2l3-4 2.25 3 3-4L19 18H5z"/>
             </svg>
           </button>
           <button class="action-btn share-btn" data-story-id="${story.id}">
@@ -1000,6 +1078,519 @@ class StoriesApp {
       .slice(0, 10); // Limit to 10 tags
   }
 
+  async handleGenerateImage(button) {
+    const storyId = button.dataset.storyId;
+    
+    try {
+      // Find story data
+      const storyCard = button.closest('.story-card');
+      if (!storyCard) {
+        this.showError('Story not found');
+        return;
+      }
+      
+      const storyContent = storyCard.querySelector('.story-content').textContent;
+      const storyTimeElement = storyCard.querySelector('.story-time');
+      const storyTime = storyTimeElement ? storyTimeElement.getAttribute('title') : 'Unknown date';
+      
+      const storyData = {
+        id: storyId,
+        content: storyContent,
+        timestamp: storyTime
+      };
+      
+      this.showNotification('Generating image...', 'info');
+      
+      // Generate image
+      const canvas = await this.generateStoryImage(storyData);
+      
+      // Convert to blob and download
+      canvas.toBlob(async (blob) => {
+        try {
+          // Create download link
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `story-${storyId}-${Date.now()}.png`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          
+          this.showSuccess('Story image downloaded!');
+          
+          // Show sharing options if Web Share API is available
+          if (navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], 'story.png', { type: 'image/png' })] })) {
+            const file = new File([blob], 'story.png', { type: 'image/png' });
+            try {
+              await navigator.share({
+                title: 'Anonymous Story',
+                text: 'Check out this inspiring story',
+                files: [file]
+              });
+            } catch (shareError) {
+              if (shareError.name !== 'AbortError') {
+                console.log('Share failed:', shareError);
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Error processing image:', error);
+          this.showError('Failed to process image');
+        }
+      }, 'image/png');
+      
+    } catch (error) {
+      console.error('Error generating story image:', error);
+      this.showError('Failed to generate story image');
+    }
+  }
+
+  async generateStoryImage(storyData) {
+    try {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      // Set canvas size for social media (1080x1080 for Instagram)
+      canvas.width = 1080;
+      canvas.height = 1080;
+      
+      // Create gradient background
+      const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      gradient.addColorStop(0, '#8a9be7ff');
+      gradient.addColorStop(1, '#e493c9ff');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Add decorative elements
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+      ctx.beginPath();
+      ctx.arc(200, 200, 100, 0, 2 * Math.PI);
+      ctx.arc(880, 300, 80, 0, 2 * Math.PI);
+      ctx.arc(150, 800, 60, 0, 2 * Math.PI);
+      ctx.arc(900, 850, 90, 0, 2 * Math.PI);
+      ctx.fill();
+      
+      // Add heart icon
+      const heartSize = 120;
+      const heartX = (canvas.width - heartSize) / 2;
+      const heartY = 150;
+      
+      ctx.fillStyle = '#ffffff';
+      ctx.font = `${heartSize}px Arial`;
+      ctx.textAlign = 'center';
+      ctx.fillText('❤️', heartX + heartSize/2, heartY + heartSize);
+      
+      // Add "Story" label
+      ctx.font = '36px Inter, Arial, sans-serif';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+      ctx.fillText('Anonymous Story', canvas.width / 2, heartY + heartSize + 80);
+      
+      // Add story content with word wrapping
+      ctx.fillStyle = 'white';
+      ctx.font = 'bold 42px Inter, Arial, sans-serif';
+      ctx.textAlign = 'center';
+      
+      const storyText = storyData.content;
+      const maxWidth = canvas.width - 120;
+      const lineHeight = 60;
+      let y = 450;
+      
+      // Word wrap function
+      const wrapText = (text, maxWidth) => {
+        const words = text.split(' ');
+        const lines = [];
+        let currentLine = '';
+        
+        for (let word of words) {
+          const testLine = currentLine + word + ' ';
+          const testWidth = ctx.measureText(testLine).width;
+          
+          if (testWidth > maxWidth && currentLine !== '') {
+            lines.push(currentLine.trim());
+            currentLine = word + ' ';
+          } else {
+            currentLine = testLine;
+          }
+        }
+        lines.push(currentLine.trim());
+        return lines;
+      };
+      
+      const lines = wrapText(storyText, maxWidth);
+      
+      // Draw story text
+      lines.forEach((line, index) => {
+        ctx.fillText(line, canvas.width / 2, y + (index * lineHeight));
+      });
+      
+      // Add timestamp if available
+      if (storyData.timestamp && storyData.timestamp !== 'Unknown date') {
+        y += (lines.length * lineHeight) + 80;
+        
+        ctx.font = '28px Inter, Arial, sans-serif';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.fillText(storyData.timestamp, canvas.width / 2, y);
+      }
+      
+      // Add app branding at bottom
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+      ctx.font = '28px Inter, Arial, sans-serif';
+      ctx.fillText('Just Let It Out', canvas.width / 2, canvas.height - 80);
+      
+      ctx.font = '24px Inter, Arial, sans-serif';
+      ctx.fillText('Share your story anonymously', canvas.width / 2, canvas.height - 40);
+      
+      return canvas;
+    } catch (error) {
+      console.error('Error generating story image:', error);
+      throw error;
+    }
+  }
+
+  async handleBookmark(button) {
+    const storyId = button.dataset.storyId;
+    if (!storyId || !this.currentUser) return;
+
+    const isBookmarked = button.classList.contains("active");
+    
+    try {
+      if (isBookmarked) {
+        // Remove bookmark
+        button.classList.remove("active");
+        button.title = "Bookmark Story";
+        await this.removeUserBookmark(storyId);
+        this.showNotification("Bookmark removed", "info");
+      } else {
+        // Add bookmark
+        button.classList.add("active");
+        button.title = "Remove Bookmark";
+        await this.addUserBookmark(storyId);
+        this.showNotification("Story bookmarked!", "success");
+      }
+    } catch (error) {
+      console.error('Error updating bookmark:', error);
+      // Revert UI change
+      if (isBookmarked) {
+        button.classList.add("active");
+        button.title = "Remove Bookmark";
+      } else {
+        button.classList.remove("active");
+        button.title = "Bookmark Story";
+      }
+      this.showError('Failed to update bookmark. Please try again.');
+    }
+  }
+
+  async addUserBookmark(storyId) {
+    try {
+      const userBookmarksRef = doc(db, 'userBookmarks', this.currentUser.uid);
+      const userDoc = await getDoc(userBookmarksRef);
+      
+      if (userDoc.exists()) {
+        const bookmarks = userDoc.data().storyBookmarks || [];
+        if (!bookmarks.includes(storyId)) {
+          bookmarks.push(storyId);
+          await updateDoc(userBookmarksRef, { storyBookmarks: bookmarks });
+        }
+      } else {
+        await setDoc(userBookmarksRef, { storyBookmarks: [storyId] });
+      }
+    } catch (error) {
+      console.error('Error adding user bookmark:', error);
+    }
+  }
+
+  async removeUserBookmark(storyId) {
+    try {
+      const userBookmarksRef = doc(db, 'userBookmarks', this.currentUser.uid);
+      const userDoc = await getDoc(userBookmarksRef);
+      
+      if (userDoc.exists()) {
+        const bookmarks = userDoc.data().storyBookmarks || [];
+        const updatedBookmarks = bookmarks.filter(id => id !== storyId);
+        await updateDoc(userBookmarksRef, { storyBookmarks: updatedBookmarks });
+      }
+    } catch (error) {
+      console.error('Error removing user bookmark:', error);
+    }
+  }
+
+  async loadUserBookmarks() {
+    if (!this.currentUser) return;
+
+    try {
+      const userBookmarksRef = doc(db, 'userBookmarks', this.currentUser.uid);
+      
+      this.unsubscribeUserBookmarks = onSnapshot(userBookmarksRef, (doc) => {
+        if (doc.exists()) {
+          const data = doc.data();
+          this.userBookmarks = new Set(data.storyBookmarks || []);
+        } else {
+          this.userBookmarks = new Set();
+        }
+        
+        // Update UI for existing stories
+        this.updateBookmarkButtons();
+      }, (error) => {
+        console.error('Error loading user bookmarks:', error);
+        this.userBookmarks = new Set();
+      });
+
+    } catch (error) {
+      console.error('Error setting up user bookmarks listener:', error);
+      this.userBookmarks = new Set();
+    }
+  }
+
+  updateBookmarkButtons() {
+    const bookmarkButtons = document.querySelectorAll('.bookmark-btn[data-story-id]');
+    bookmarkButtons.forEach(button => {
+      const storyId = button.dataset.storyId;
+      const isBookmarked = this.userBookmarks.has(storyId);
+      
+      if (isBookmarked) {
+        button.classList.add('active');
+        button.title = 'Remove Bookmark';
+      } else {
+        button.classList.remove('active');
+        button.title = 'Bookmark Story';
+      }
+    });
+  }
+
+  getReadingTime(content) {
+    const wordsPerMinute = 200;
+    const words = content.split(' ').length;
+    const minutes = Math.ceil(words / wordsPerMinute);
+    return minutes === 1 ? '1 min read' : `${minutes} min read`;
+  }
+
+  getStoryLengthClass(content) {
+    const length = content.length;
+    if (length < 200) return 'short';
+    if (length < 500) return 'medium';
+    return 'long';
+  }
+
+  handleTagFilter(tagElement) {
+    const tag = tagElement.textContent.replace('#', '');
+    this.currentFilter = tag;
+    this.filterStoriesByTag(tag);
+    this.showNotification(`Filtering by #${tag}`, "info");
+  }
+
+  filterStoriesByTag(tag) {
+    const storyCards = document.querySelectorAll('.story-card');
+    storyCards.forEach(card => {
+      const tags = card.querySelectorAll('.story-tag');
+      const hasTag = Array.from(tags).some(tagEl => 
+        tagEl.textContent.toLowerCase().includes(tag.toLowerCase())
+      );
+      
+      if (hasTag || tag === 'all') {
+        card.style.display = 'block';
+        card.style.opacity = '1';
+      } else {
+        card.style.display = 'none';
+      }
+    });
+  }
+
+  applyFiltersAndSort() {
+    const feed = document.getElementById("storiesFeed");
+    if (!feed) return;
+
+    let filteredStories = [...this.stories];
+
+    // Apply filters
+    switch (this.currentFilter) {
+      case 'bookmarked':
+        filteredStories = filteredStories.filter(story => 
+          this.userBookmarks.has(story.id)
+        );
+        break;
+      case 'trending':
+        // Trending = stories with high engagement in last 24 hours
+        const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        filteredStories = filteredStories.filter(story => {
+          const storyDate = story.timestamp.toDate ? story.timestamp.toDate() : new Date(story.timestamp);
+          return storyDate > oneDayAgo && this.getTotalReactions(story.reactions) > 2;
+        });
+        break;
+    }
+
+    // Apply sorting
+    switch (this.currentSort) {
+      case 'popular':
+        filteredStories.sort((a, b) => {
+          const aScore = (a.replies || 0) + this.getTotalReactions(a.reactions);
+          const bScore = (b.replies || 0) + this.getTotalReactions(b.reactions);
+          return bScore - aScore;
+        });
+        break;
+      case 'reactions':
+        filteredStories.sort((a, b) => 
+          this.getTotalReactions(b.reactions) - this.getTotalReactions(a.reactions)
+        );
+        break;
+      case 'newest':
+      default:
+        filteredStories.sort((a, b) => {
+          const aTime = a.timestamp.toDate ? a.timestamp.toDate() : new Date(a.timestamp);
+          const bTime = b.timestamp.toDate ? b.timestamp.toDate() : new Date(b.timestamp);
+          return bTime - aTime;
+        });
+        break;
+    }
+
+    // Clear and redisplay filtered stories
+    const existingStories = feed.querySelectorAll('.story-card[data-story-id]');
+    existingStories.forEach(story => story.remove());
+    
+    if (filteredStories.length === 0) {
+      const emptyMessage = document.createElement('div');
+      emptyMessage.className = 'filter-empty-state';
+      emptyMessage.innerHTML = `
+        <div class="empty-state-icon">📝</div>
+        <h3>No stories found</h3>
+        <p>Try adjusting your filters or search terms.</p>
+        <button class="btn-secondary clear-filters-btn">
+          Clear Filters
+        </button>
+      `;
+      
+      // Add event listener for clear filters button
+      const clearFiltersBtn = emptyMessage.querySelector('.clear-filters-btn');
+      clearFiltersBtn.addEventListener('click', () => {
+        const storyFilter = document.getElementById('storyFilter');
+        const storySort = document.getElementById('storySort');
+        const storySearch = document.getElementById('storySearch');
+        
+        if (storyFilter) storyFilter.value = 'all';
+        if (storySort) storySort.value = 'newest';
+        if (storySearch) storySearch.value = '';
+        
+        this.currentFilter = 'all';
+        this.currentSort = 'newest';
+        
+        // Remove the empty message first
+        emptyMessage.remove();
+        
+        // Show all stories without filters
+        if (this.stories.length > 0) {
+          this.displayStories(this.stories);
+        } else {
+          // If no stories loaded, reload them
+          this.loadStories();
+        }
+        
+        // Clear search highlighting
+        this.searchStories('');
+      });
+      
+      feed.appendChild(emptyMessage);
+    } else {
+      this.displayStories(filteredStories);
+    }
+  }
+
+  searchStories(searchTerm) {
+    const storyCards = document.querySelectorAll('.story-card');
+    const term = searchTerm.toLowerCase().trim();
+    
+    if (!term) {
+      // Show all stories if search is empty
+      storyCards.forEach(card => {
+        card.style.display = 'block';
+        card.style.opacity = '1';
+      });
+      return;
+    }
+
+    storyCards.forEach(card => {
+      const storyText = card.querySelector('.story-text')?.textContent.toLowerCase() || '';
+      const storyTags = Array.from(card.querySelectorAll('.story-tag'))
+        .map(tag => tag.textContent.toLowerCase()).join(' ');
+      
+      const matches = storyText.includes(term) || storyTags.includes(term);
+      
+      if (matches) {
+        card.style.display = 'block';
+        card.style.opacity = '1';
+        // Highlight search terms
+        this.highlightSearchTerms(card, term);
+      } else {
+        card.style.display = 'none';
+      }
+    });
+
+    const clearSearchBtn = document.getElementById("clearSearch");
+    if (clearSearchBtn) {
+      clearSearchBtn.style.display = term ? 'block' : 'none';
+    }
+  }
+
+  highlightSearchTerms(card, term) {
+    const storyText = card.querySelector('.story-text');
+    if (!storyText) return;
+
+    const originalText = storyText.textContent;
+    const regex = new RegExp(`(${term})`, 'gi');
+    const highlightedText = originalText.replace(regex, '<mark>$1</mark>');
+    storyText.innerHTML = highlightedText;
+  }
+
+  handleStoryTemplate(button) {
+    const template = button.dataset.template;
+    const storyText = document.getElementById("storyText");
+    const storyTags = document.getElementById("storyTags");
+    
+    if (!storyText) return;
+
+    const templates = {
+      gratitude: {
+        text: "Today I'm grateful for...\n\nIt reminded me that...",
+        tags: "gratitude, mindfulness, appreciation"
+      },
+      challenge: {
+        text: "I faced a difficult situation when...\n\nWhat I learned was...\n\nTo anyone going through something similar...",
+        tags: "challenge, growth, resilience"
+      },
+      advice: {
+        text: "Something I wish I knew earlier is...\n\nThis has helped me because...\n\nI hope this helps someone else too.",
+        tags: "advice, wisdom, help"
+      },
+      milestone: {
+        text: "I reached an important milestone today...\n\nThe journey to get here was...\n\nI want to celebrate by...",
+        tags: "milestone, achievement, celebration"
+      }
+    };
+
+    const selectedTemplate = templates[template];
+    if (selectedTemplate) {
+      storyText.value = selectedTemplate.text;
+      if (storyTags) {
+        storyTags.value = selectedTemplate.tags;
+        this.updateTagsPreview(selectedTemplate.tags, document.getElementById("tagsPreview"));
+      }
+      
+      // Update character count
+      const charCount = document.getElementById("storyCharCount");
+      if (charCount) {
+        charCount.textContent = selectedTemplate.text.length;
+        charCount.style.color = selectedTemplate.text.length > 900 ? "#EF4444" : "#6b7280";
+      }
+      
+      // Focus and position cursor at the end of the first line
+      storyText.focus();
+      const firstLineEnd = selectedTemplate.text.indexOf('\n');
+      if (firstLineEnd > 0) {
+        storyText.setSelectionRange(firstLineEnd, firstLineEnd);
+      }
+    }
+  }
+
   // Cleanup when app is destroyed
   destroy() {
     if (this.unsubscribeStories) {
@@ -1007,6 +1598,9 @@ class StoriesApp {
     }
     if (this.unsubscribeUserLikes) {
       this.unsubscribeUserLikes();
+    }
+    if (this.unsubscribeUserBookmarks) {
+      this.unsubscribeUserBookmarks();
     }
   }
 
@@ -1034,6 +1628,98 @@ class StoriesApp {
       clearTimeout(scrollTimeout);
       scrollTimeout = setTimeout(handleScroll, 10);
     });
+  }
+
+  setupPullToRefresh() {
+    let startY = 0;
+    let pullDistance = 0;
+    let isPulling = false;
+    const refreshThreshold = 80;
+    
+    const feed = document.getElementById('storiesFeed');
+    if (!feed) return;
+
+    // Create refresh indicator
+    const refreshIndicator = document.createElement('div');
+    refreshIndicator.className = 'pull-refresh-indicator';
+    refreshIndicator.innerHTML = `
+      <div class="refresh-icon">↓</div>
+      <span class="refresh-text">Pull to refresh</span>
+    `;
+    feed.parentNode.insertBefore(refreshIndicator, feed);
+
+    const updateIndicator = (distance) => {
+      const progress = Math.min(distance / refreshThreshold, 1);
+      refreshIndicator.style.height = `${distance}px`;
+      refreshIndicator.style.opacity = progress;
+      
+      if (progress >= 1) {
+        refreshIndicator.querySelector('.refresh-text').textContent = 'Release to refresh';
+        refreshIndicator.querySelector('.refresh-icon').style.transform = 'rotate(180deg)';
+      } else {
+        refreshIndicator.querySelector('.refresh-text').textContent = 'Pull to refresh';
+        refreshIndicator.querySelector('.refresh-icon').style.transform = 'rotate(0deg)';
+      }
+    };
+
+    feed.addEventListener('touchstart', (e) => {
+      if (window.scrollY === 0) {
+        startY = e.touches[0].clientY;
+        isPulling = true;
+      }
+    });
+
+    feed.addEventListener('touchmove', (e) => {
+      if (!isPulling || window.scrollY > 0) return;
+      
+      const currentY = e.touches[0].clientY;
+      pullDistance = Math.max(0, currentY - startY);
+      
+      if (pullDistance > 0) {
+        e.preventDefault();
+        updateIndicator(pullDistance);
+      }
+    });
+
+    feed.addEventListener('touchend', () => {
+      if (!isPulling) return;
+      
+      if (pullDistance >= refreshThreshold) {
+        // Trigger refresh
+        refreshIndicator.querySelector('.refresh-text').textContent = 'Refreshing...';
+        refreshIndicator.querySelector('.refresh-icon').innerHTML = '⟳';
+        refreshIndicator.querySelector('.refresh-icon').style.animation = 'spin 1s linear infinite';
+        
+        this.refreshStories().finally(() => {
+          setTimeout(() => {
+            refreshIndicator.style.height = '0px';
+            refreshIndicator.style.opacity = '0';
+            refreshIndicator.querySelector('.refresh-icon').style.animation = '';
+            refreshIndicator.querySelector('.refresh-icon').innerHTML = '↓';
+          }, 500);
+        });
+      } else {
+        refreshIndicator.style.height = '0px';
+        refreshIndicator.style.opacity = '0';
+      }
+      
+      isPulling = false;
+      pullDistance = 0;
+    });
+  }
+
+  async refreshStories() {
+    try {
+      this.showNotification('Refreshing stories...', 'info');
+      this.stories = [];
+      this.lastVisibleStory = null;
+      this.hasMoreStories = true;
+      await this.loadStories();
+      this.showNotification('Stories refreshed!', 'success');
+    } catch (error) {
+      console.error('Error refreshing stories:', error);
+      this.showError('Failed to refresh stories');
+    }
   }
 
   showReplyInput(container, comments, commentId, commentElement) {
@@ -1410,7 +2096,10 @@ class StoriesApp {
     });
   }
 
-  // ...existing code...
+  getTotalReactions(reactions) {
+    if (!reactions) return 0;
+    return Object.values(reactions).reduce((sum, count) => sum + (count || 0), 0);
+  }
 }
 
 // Add animation CSS

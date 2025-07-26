@@ -32,6 +32,30 @@
 
         <!-- Main Content -->
         <main class="stories-main">
+            <!-- Filter and Sort Controls -->
+            <div class="stories-controls">
+                <div class="filter-section">
+                    <label>Filter by:</label>
+                    <select id="storyFilter" class="filter-select">
+                        <option value="all">All Stories</option>
+                        <option value="bookmarked">Bookmarked</option>
+                        <option value="trending">Trending</option>
+                    </select>
+                </div>
+                <div class="sort-section">
+                    <label>Sort by:</label>
+                    <select id="storySort" class="sort-select">
+                        <option value="newest">Newest</option>
+                        <option value="popular">Most Popular</option>
+                        <option value="reactions">Most Reactions</option>
+                    </select>
+                </div>
+                <div class="search-section">
+                    <input type="text" id="storySearch" placeholder="Search stories..." class="search-input">
+                    <button id="clearSearch" class="clear-search-btn">×</button>
+                </div>
+            </div>
+
             <!-- Stories Feed -->
             <div class="stories-feed" id="storiesFeed">
                 <!-- Loading State -->
@@ -81,6 +105,18 @@
                 </div>
                 <div class="modal-body">
                     <p class="modal-description">Share your experience anonymously to help others feel less alone. Your story matters.</p>
+                    
+                    <!-- Story Templates -->
+                    <div class="story-templates">
+                        <label class="template-label">Get started with a template:</label>
+                        <div class="template-buttons">
+                            <button type="button" class="template-btn" data-template="gratitude">Gratitude</button>
+                            <button type="button" class="template-btn" data-template="challenge">Challenge</button>
+                            <button type="button" class="template-btn" data-template="advice">Advice</button>
+                            <button type="button" class="template-btn" data-template="milestone">Milestone</button>
+                        </div>
+                    </div>
+                    
                     <textarea id="storyText" placeholder="Share your story, thoughts, or encouragement..." maxlength="1000"></textarea>
                     <div class="character-count">
                         <span id="storyCharCount">0</span>/1000
@@ -104,6 +140,13 @@
                 </div>
             </div>
         </div>
+
+        <!-- Floating Write Button -->
+        <button class="floating-write-btn" id="floatingWriteBtn" title="Share Your Story">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+            </svg>
+        </button>
 
         <!-- Bottom Navigation -->
         <nav class="bottom-nav">

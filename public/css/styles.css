@@ -73,6 +73,41 @@
   --transition-slow: 350ms ease-in-out;
 }
 
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Prevent horizontal scroll globally */
+* {
+  max-width: 100%;
+}
+
+/* Specific fixes for common overflow sources */
+img, video, iframe, embed, object {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Ensure all containers respect parent width */
+div, section, article, aside, main, header, footer, nav {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Prevent flex/grid containers from overflowing */
+.app-container, .main-content, .header, .footer, 
+[class*="container"], [class*="wrapper"], [class*="grid"],
+[style*="display: flex"], [style*="display: grid"] {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 body {
   font-family: var(--font-family);
   background: var(--gradient-bg);
@@ -81,6 +116,8 @@ body {
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  margin: 0;
+  padding: 0;
   /* Remove flex centering to allow natural flow and scrolling */
 }
 
@@ -89,6 +126,8 @@ body {
   display: flex;
   flex-direction: column;
   width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 /* Header Styles */
@@ -233,6 +272,8 @@ body {
   align-items: center;
   justify-content: center;
   min-height: auto; /* Allow natural height on desktop */
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 /* Additional responsive height handling for tall screens */
@@ -557,7 +598,7 @@ body {
   position: fixed;
   left: 0;
   right: 0;
-  bottom: 110px; /* Much higher clearance above bottom nav */
+  bottom: 105px; /* Much higher clearance above bottom nav */
   z-index: 25;
   font-style: italic;
   font-weight: 600;
@@ -570,7 +611,7 @@ body {
   .trademark-footer {
     font-size: var(--font-size-sm);
     padding: var(--spacing-3) 0;
-    bottom: 110px;
+    bottom: 100px;
   }
 }
 
@@ -1166,17 +1207,17 @@ body {
     align-items: center;
     justify-content: flex-start;
     min-height: 100vh;
-    width: 100vw;
+    width: 100%;
   }
   .main-content {
     align-items: center;
     justify-content: flex-start;
     min-height: 0;
-    width: 100vw;
+    width: 100%;
   }
   .header {
     padding: var(--spacing-3) var(--spacing-3) var(--spacing-4);
-    width: 100vw;
+    width: 100%;
     box-sizing: border-box;
   }
   .header-content {
@@ -1192,17 +1233,17 @@ body {
     margin-top: var(--spacing-1);
   }
   .app-logo {
-    width: 64px;
-    height: 64px;
+    width: 70px;
+    height: 70px;
     margin: 0 auto;
   }
   .profile-btn {
-    width: 36px;
-    height: 36px;
+    width: 42px;
+    height: 42px;
   }
   .profile-btn svg {
-    width: 22px;
-    height: 22px;
+    width: 30px;
+    height: 30px;
   }
   .features-grid {
     gap: var(--spacing-3);
@@ -1316,13 +1357,13 @@ body {
   }
 
   .profile-btn {
-    width: 32px;
-    height: 32px;
+    width: 35x;
+    height: 35px;
   }
 
   .profile-btn svg {
-    width: 18px;
-    height: 18px;
+    width: 25px;
+    height: 25px;
   }
 
   .features-grid {
