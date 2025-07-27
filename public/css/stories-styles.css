@@ -1570,4 +1570,18 @@ mark {
   .story-meta .reading-info {
     font-size: 11px;
   }
+  
+  /* Fix tiny action button icons on mobile */
+  .action-btn svg {
+    width: 24px !important;
+    height: 24px !important;
+    min-width: 24px;
+    min-height: 24px;
+  }
+  
+  .action-btn {
+    padding: 10px;
+    min-width: 44px;
+    min-height: 44px;
+  }
 }

@@ -252,10 +252,9 @@
 }
 
 .message.sent .message-bubble {
-  background: var(--primary-purple) !important;
-  color: white !important;
+  background: var(--primary-purple);
+  color: white;
   border-bottom-right-radius: 6px;
-  box-shadow: 0 2px 8px rgba(123, 97, 255, 0.3);
 }
 
 .message.received .message-bubble {
@@ -263,7 +262,6 @@
   color: var(--gray-800);
   border-bottom-left-radius: 6px;
   border: 1px solid rgba(255, 255, 255, 0.5);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .message-time {
@@ -1005,6 +1003,25 @@
   }
 }
 
+/* Enhanced message styles */
+.message.sent .message-bubble {
+  background: linear-gradient(135deg, var(--primary-600), var(--primary-700));
+  color: white;
+  box-shadow: 0 2px 8px rgba(var(--primary-500), 0.3);
+}
+
+.message.received .message-bubble {
+  background: var(--gray-100);
+  color: var(--gray-800);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.message-time {
+  font-size: var(--font-size-xs);
+  color: var(--gray-500);
+  margin-top: 4px;
+}
+
 /* Connection status improvements */
 .status-indicator.connected {
   background: var(--success-500);
@@ -1064,80 +1081,4 @@
 .system-message p {
   margin: 0;
   font-weight: 500;
-}
-
-/* Match notification */
-.match-notification {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: linear-gradient(135deg, var(--primary-600), var(--primary-700));
-  color: white;
-  padding: var(--spacing-6);
-  border-radius: var(--border-radius-lg);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-  z-index: 9999;
-  text-align: center;
-  animation: matchSlideIn 0.5s ease;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--spacing-2);
-}
-
-.match-icon {
-  font-size: 3rem;
-  animation: bounce 1s infinite;
-}
-
-.match-text {
-  font-size: var(--font-size-xl);
-  font-weight: 700;
-  margin: 0;
-}
-
-.match-subtext {
-  font-size: var(--font-size-base);
-  opacity: 0.9;
-  margin: 0;
-}
-
-@keyframes matchSlideIn {
-  from {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.8);
-  }
-  to {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-  }
-}
-
-@keyframes bounce {
-  0%, 20%, 50%, 80%, 100% {
-    transform: translateY(0);
-  }
-  40% {
-    transform: translateY(-10px);
-  }
-  60% {
-    transform: translateY(-5px);
-  }
-}
-
-/* Loading spinner for status indicator */
-.status-indicator.searching::after {
-  content: '';
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top: 2px solid white;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-left: var(--spacing-2);
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
 }

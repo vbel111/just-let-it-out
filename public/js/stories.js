@@ -260,24 +260,37 @@ class StoriesApp {
         firestoreOrderBy('timestamp', 'desc'),
         firestoreLimit(20)
       );
-      getDocs(storiesQuery).then((snapshot) => {
+      
+      // Set up real-time listener for stories
+      this.unsubscribeStories = onSnapshot(storiesQuery, (snapshot) => {
+        console.log('Stories snapshot received, docs count:', snapshot.docs.length);
         const stories = [];
         snapshot.forEach((doc) => {
-          stories.push({ id: doc.id, ...doc.data() });
+          const storyData = { id: doc.id, ...doc.data() };
+          stories.push(storyData);
         });
+        
+        // Update stories data
         this.stories = stories;
         this.lastVisibleStory = snapshot.docs[snapshot.docs.length - 1] || null;
         this.hasMoreStories = snapshot.docs.length === 20;
+        
+        console.log('Updated stories data:', this.stories.map(s => ({ id: s.id, reactions: s.reactions })));
+        
         if (stories.length === 0) {
           this.showUIState('empty');
         } else {
           this.showUIState('stories');
           this.displayStories(stories);
         }
-      }).catch((error) => {
-        console.error('Error loading stories:', error);
+        
+        // Update reaction buttons with latest data
+        this.updateAllMainReactionButtons();
+      }, (error) => {
+        console.error('Error in stories listener:', error);
         this.showUIState('error');
       });
+      
     } catch (error) {
       console.error('Error setting up stories listener:', error);
       this.showUIState('error');
@@ -1767,27 +1780,37 @@ class StoriesApp {
   }
 
   async handleReaction(button) {
+    console.log('handleReaction called with button:', button);
     const storyId = button.dataset.storyId;
     const reactionType = button.dataset.reaction;
-    if (!storyId || !reactionType || !this.currentUser) return;
+    console.log('Story ID:', storyId, 'Reaction Type:', reactionType, 'Current User:', this.currentUser);
+    
+    if (!storyId || !reactionType || !this.currentUser) {
+      console.log('Missing required data:', { storyId, reactionType, currentUser: this.currentUser });
+      return;
+    }
 
     const currentUserReaction = this.userReactions.get(storyId);
     const isCurrentReaction = currentUserReaction === reactionType;
+    console.log('Current user reaction:', currentUserReaction, 'Is same reaction?', isCurrentReaction);
     
     try {
       const storyRef = doc(db, 'stories', storyId);
       
       if (isCurrentReaction) {
+        console.log('Removing reaction');
         // Remove reaction
         await updateDoc(storyRef, {
           [`reactions.${reactionType}`]: increment(-1)
         });
+        console.log('Firestore reaction decremented');
         
         // Remove from user reactions
         await this.removeUserReaction(storyId);
         this.userReactions.delete(storyId);
         
       } else {
+        console.log('Adding/changing reaction');
         // Add new reaction (remove old one if it exists)
         const updateData = {
           [`reactions.${reactionType}`]: increment(1)
@@ -1799,6 +1822,7 @@ class StoriesApp {
         }
         
         await updateDoc(storyRef, updateData);
+        console.log('Firestore reaction updated:', updateData);
         
         // Update user reactions
         await this.addUserReaction(storyId, reactionType);
@@ -1827,23 +1851,28 @@ class StoriesApp {
 
     } catch (error) {
       console.error('Error updating reaction:', error);
+      console.error('Error details:', error.message, error.code);
       // Revert UI changes by refreshing the story element
       this.refreshStoryElement(storyId);
     }
   }
 
   async addUserReaction(storyId, reactionType) {
+    console.log('Adding user reaction:', storyId, reactionType);
     try {
       const userReactionsRef = doc(db, 'userReactions', this.currentUser.uid);
       const userDoc = await getDoc(userReactionsRef);
       
       const reactions = userDoc.exists() ? (userDoc.data().storyReactions || {}) : {};
       reactions[storyId] = reactionType;
+      console.log('Updated reactions object:', reactions);
       
       if (userDoc.exists()) {
         await updateDoc(userReactionsRef, { storyReactions: reactions });
+        console.log('Updated existing user reactions document');
       } else {
         await setDoc(userReactionsRef, { storyReactions: reactions });
+        console.log('Created new user reactions document');
       }
     } catch (error) {
       console.error('Error adding user reaction:', error);
@@ -1851,6 +1880,7 @@ class StoriesApp {
   }
 
   async removeUserReaction(storyId) {
+    console.log('Removing user reaction for story:', storyId);
     try {
       const userReactionsRef = doc(db, 'userReactions', this.currentUser.uid);
       const userDoc = await getDoc(userReactionsRef);
@@ -1858,7 +1888,11 @@ class StoriesApp {
       if (userDoc.exists()) {
         const reactions = userDoc.data().storyReactions || {};
         delete reactions[storyId];
+        console.log('Updated reactions after removal:', reactions);
         await updateDoc(userReactionsRef, { storyReactions: reactions });
+        console.log('User reaction removed successfully');
+      } else {
+        console.log('No user reactions document exists');
       }
     } catch (error) {
       console.error('Error removing user reaction:', error);
@@ -1866,20 +1900,30 @@ class StoriesApp {
   }
 
   async loadUserReactions() {
-    if (!this.currentUser) return;
+    console.log('Loading user reactions for user:', this.currentUser?.uid);
+    if (!this.currentUser) {
+      console.log('No current user, skipping reaction load');
+      return;
+    }
 
     try {
       const userReactionsRef = doc(db, 'userReactions', this.currentUser.uid);
+      console.log('Setting up user reactions listener...');
       
       onSnapshot(userReactionsRef, (doc) => {
+        console.log('User reactions snapshot received, exists:', doc.exists());
         if (doc.exists()) {
           const data = doc.data();
+          console.log('User reactions data:', data);
           const reactions = data.storyReactions || {};
+          console.log('Story reactions:', reactions);
           this.userReactions = new Map(Object.entries(reactions));
         } else {
+          console.log('No user reactions document, creating empty map');
           this.userReactions = new Map();
         }
         
+        console.log('User reactions map:', this.userReactions);
         // Update all main reaction buttons
         this.updateAllMainReactionButtons();
       });
@@ -2067,8 +2111,12 @@ class StoriesApp {
   }
 
   updateMainReactionButton(storyId) {
+    console.log('Updating main reaction button for story:', storyId);
     const container = document.querySelector(`[data-story-id="${storyId}"].reactions-container`);
-    if (!container) return;
+    if (!container) {
+      console.log('Container not found for story:', storyId);
+      return;
+    }
     
     const mainBtn = container.querySelector(".main-reaction-btn");
     const iconSpan = mainBtn.querySelector(".main-reaction-icon");
@@ -2076,6 +2124,8 @@ class StoriesApp {
     
     const userReaction = this.userReactions.get(storyId);
     const story = this.stories.find(s => s.id === storyId);
+    
+    console.log('User reaction:', userReaction, 'Story data:', story?.reactions);
     
     if (userReaction) {
       iconSpan.textContent = this.getReactionEmoji(userReaction);
@@ -2086,7 +2136,22 @@ class StoriesApp {
     }
     
     if (story) {
-      countSpan.textContent = this.getTotalReactions(story.reactions);
+      const totalReactions = this.getTotalReactions(story.reactions);
+      console.log('Setting total reactions to:', totalReactions);
+      countSpan.textContent = totalReactions;
+      
+      // Also update individual reaction counts in the options
+      const options = container.querySelector('.reaction-options');
+      if (options) {
+        const reactionButtons = options.querySelectorAll('.reaction-option-btn');
+        reactionButtons.forEach(btn => {
+          const reactionType = btn.dataset.reaction;
+          const countEl = btn.querySelector('.reaction-count');
+          if (countEl && story.reactions) {
+            countEl.textContent = story.reactions[reactionType] || 0;
+          }
+        });
+      }
     }
   }
 

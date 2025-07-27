@@ -28,6 +28,9 @@ let timeRemaining = 300; // 5 minutes in seconds
 let pairingTimeout = null;
 let messageListener = null;
 let isConnected = false;
+let typingTimer = null;
+let isTyping = false;
+let partnerTyping = false;
 
 // DOM elements
 const backBtn = document.getElementById('backBtn');
@@ -50,6 +53,20 @@ const findNewPartnerBtn2 = document.getElementById('findNewPartnerBtn2');
 const goHomeBtn = document.getElementById('goHomeBtn');
 const goHomeBtn2 = document.getElementById('goHomeBtn2');
 const endReason = document.getElementById('endReason');
+
+// Create typing indicator element
+const typingIndicator = document.createElement('div');
+typingIndicator.id = 'typingIndicator';
+typingIndicator.className = 'typing-indicator';
+typingIndicator.innerHTML = `
+  <div class="typing-dots">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+  <span class="typing-text">Partner is typing...</span>
+`;
+typingIndicator.style.display = 'none';
 
 // Pair Chat App Class
 class PairChatApp {
@@ -115,6 +132,18 @@ class PairChatApp {
     messageInput.addEventListener('input', () => {
       this.adjustTextareaHeight();
       sendBtn.disabled = !messageInput.value.trim();
+      
+      // Handle typing indicator
+      if (currentSessionId && isConnected) {
+        this.handleTyping();
+      }
+    });
+
+    messageInput.addEventListener('keyup', () => {
+      // Handle typing indicator on key release
+      if (currentSessionId && isConnected) {
+        this.handleTyping();
+      }
     });
 
     // Disconnect button
@@ -159,6 +188,14 @@ class PairChatApp {
       }
 
       console.log('Adding user to pairing queue:', currentUser.uid);
+      
+      // Check current queue size for user feedback
+      const queueSnapshot = await getDocs(collection(db, 'pairingQueue'));
+      const queueSize = queueSnapshot.size;
+      
+      if (queueSize > 0) {
+        this.updateStatus('searching', `${queueSize} people waiting...`);
+      }
       
       // Add user to pairing queue
       const queueDoc = await addDoc(collection(db, 'pairingQueue'), {
@@ -306,6 +343,55 @@ class PairChatApp {
     timeRemainingSpan.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
   }
 
+  async handleTyping() {
+    if (!isTyping) {
+      isTyping = true;
+      try {
+        await updateDoc(doc(db, 'chatSessions', currentSessionId), {
+          [`typing.${currentUser.uid}`]: serverTimestamp()
+        });
+      } catch (error) {
+        console.error('Error updating typing status:', error);
+      }
+    }
+
+    // Clear existing timer
+    if (typingTimer) {
+      clearTimeout(typingTimer);
+    }
+
+    // Set timer to stop typing indicator after 3 seconds
+    typingTimer = setTimeout(async () => {
+      isTyping = false;
+      try {
+        await updateDoc(doc(db, 'chatSessions', currentSessionId), {
+          [`typing.${currentUser.uid}`]: null
+        });
+      } catch (error) {
+        console.error('Error clearing typing status:', error);
+      }
+    }, 3000);
+  }
+
+  showTypingIndicator() {
+    if (!partnerTyping) {
+      partnerTyping = true;
+      chatMessages.appendChild(typingIndicator);
+      typingIndicator.style.display = 'flex';
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+  }
+
+  hideTypingIndicator() {
+    if (partnerTyping) {
+      partnerTyping = false;
+      if (typingIndicator.parentNode) {
+        typingIndicator.parentNode.removeChild(typingIndicator);
+      }
+      typingIndicator.style.display = 'none';
+    }
+  }
+
   async listenToMessages() {
     // Clear existing messages first
     chatMessages.innerHTML = `
@@ -332,12 +418,35 @@ class PairChatApp {
       });
     });
 
-    // Listen for partner disconnection
+    // Listen for partner disconnection and typing indicators
     const sessionDoc = doc(db, 'chatSessions', currentSessionId);
     onSnapshot(sessionDoc, (doc) => {
       const sessionData = doc.data();
-      if (sessionData && sessionData.status === 'ended') {
-        this.endChatSession('partner_disconnected');
+      if (sessionData) {
+        // Check if session ended
+        if (sessionData.status === 'ended') {
+          this.endChatSession('partner_disconnected');
+          return;
+        }
+
+        // Check typing indicators
+        if (sessionData.typing && partnerId) {
+          const partnerTypingTime = sessionData.typing[partnerId];
+          if (partnerTypingTime) {
+            const now = new Date();
+            const typingTime = partnerTypingTime.toDate();
+            const timeDiff = now - typingTime;
+            
+            // Show typing indicator if partner typed within last 4 seconds
+            if (timeDiff < 4000) {
+              this.showTypingIndicator();
+            } else {
+              this.hideTypingIndicator();
+            }
+          } else {
+            this.hideTypingIndicator();
+          }
+        }
       }
     });
   }
@@ -347,6 +456,19 @@ class PairChatApp {
     if (!message || !currentSessionId) return;
 
     try {
+      // Clear typing indicator when sending
+      if (typingTimer) {
+        clearTimeout(typingTimer);
+        typingTimer = null;
+      }
+      
+      isTyping = false;
+      
+      // Clear own typing status
+      await updateDoc(doc(db, 'chatSessions', currentSessionId), {
+        [`typing.${currentUser.uid}`]: null
+      });
+
       await addDoc(collection(db, 'chatSessions', currentSessionId, 'messages'), {
         senderId: currentUser.uid,
         message: message,
@@ -455,12 +577,23 @@ class PairChatApp {
     partnerId = null;
     isConnected = false;
     timeRemaining = 300;
+    isTyping = false;
+    partnerTyping = false;
     
     // Stop any existing listeners
     if (messageListener) {
       messageListener();
       messageListener = null;
     }
+    
+    // Clear typing timer
+    if (typingTimer) {
+      clearTimeout(typingTimer);
+      typingTimer = null;
+    }
+    
+    // Hide typing indicator
+    this.hideTypingIndicator();
     
     // Small delay to ensure cleanup is complete
     setTimeout(() => {
