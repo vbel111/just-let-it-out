@@ -78,21 +78,39 @@
 }
 
 html, body {
-  overflow-x: hidden;
-  overflow-y: hidden; /* Hide vertical scroll bar */
+  overflow-x: hidden; /* Hide horizontal scroll bar */
+  overflow-y: auto; /* Allow vertical scroll when needed */
   width: 100%;
   max-width: 100%;
-  height: 100vh; /* Set to viewport height */
+  min-height: 100vh; /* Allow content to grow beyond viewport */
 }
 
 /* Hide scroll bars globally while keeping scroll functionality */
 ::-webkit-scrollbar {
-  display: none; /* For WebKit browsers */
+  width: 6px; /* Keep a thin scroll bar for vertical */
+}
+
+::-webkit-scrollbar-horizontal {
+  display: none; /* Hide horizontal scroll bar */
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.5);
 }
 
 * {
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: auto; /* Allow scroll in IE and Edge */
+  scrollbar-width: thin; /* Thin scroll bar in Firefox */
 }
 
 /* Prevent horizontal scroll globally */
@@ -117,15 +135,16 @@ div, section, article, aside, main, header, footer, nav {
 [class*="container"], [class*="wrapper"], [class*="grid"],
 [style*="display: flex"], [style*="display: grid"] {
   max-width: 100%;
-  overflow-x: hidden;
+  
 }
 
 body {
   font-family: var(--font-family);
   background: var(--gradient-bg);
-  height: 100vh; /* Set to exact viewport height */
+  min-height: 100vh; /* Allow content to grow beyond viewport */
   color: var(--gray-800);
-  overflow: hidden; /* Hide all scroll bars */
+  overflow-x: hidden; /* Hide horizontal scroll */
+  overflow-y: auto; /* Allow vertical scroll when needed */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   margin: 0;
@@ -133,17 +152,17 @@ body {
 }
 
 .app-container {
-  height: 100vh; /* Set to exact viewport height */
+  min-height: 100vh; /* Allow content to grow beyond viewport */
   display: flex;
   flex-direction: column;
   width: 100%;
   max-width: 100%;
-  overflow: hidden; /* Hide all scroll bars */
+  overflow-x: hidden; /* Hide horizontal scroll */
 }
 
 /* Header Styles */
 .header {
-  padding: var(--spacing-8) var(--spacing-4) var(--spacing-8);
+  padding: var(--spacing-6) var(--spacing-4) var(--spacing-4); /* Reduced padding */
   position: relative;
   z-index: 10;
   flex-shrink: 0;
@@ -163,7 +182,7 @@ body {
   flex-direction: column;
   align-items: center;
   flex: 1;
-  gap: var(--spacing-3);
+  gap: var(--spacing-2); /* Reduced gap */
 }
 
 .user-status {
@@ -176,8 +195,8 @@ body {
 }
 
 .app-logo {
-  width: 80px;
-  height: 80px;
+  width: 64px; /* Slightly smaller */
+  height: 64px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -192,14 +211,14 @@ body {
 }
 
 .app-title {
-  font-size: var(--font-size-2xl);
+  font-size: var(--font-size-xl); /* Smaller title */
   font-weight: 800;
   color: #1e293b;
   text-align: center;
   text-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
   line-height: 1.1;
-  margin-top: var(--spacing-3);
-  margin-bottom: var(--spacing-2);
+  margin-top: var(--spacing-2); /* Reduced margins */
+  margin-bottom: var(--spacing-1);
 }
 
 .user-status {
@@ -217,8 +236,8 @@ body {
   justify-content: center;
   transition: all var(--transition-fast);
   border-radius: 50%;
-  width: 56px;
-  height: 56px;
+  width: 48px; /* Smaller profile button */
+  height: 48px;
   box-shadow: var(--shadow-lg);
 }
 
@@ -230,8 +249,8 @@ body {
 }
 
 .profile-btn svg {
-  width: 36px;
-  height: 36px;
+  width: 28px; /* Smaller icon */
+  height: 28px;
   color: var(--gray-700);
 }
 
@@ -282,8 +301,8 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: auto; /* Allow natural height on desktop */
-  overflow-x: hidden;
+  height: calc(100vh - 160px); /* Fixed height to prevent scroll */
+  overflow: hidden; /* Prevent scrolling on index page */
   box-sizing: border-box;
 }
 
@@ -431,16 +450,16 @@ body {
 .features-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--spacing-4);
-  margin: var(--spacing-4) 0;
+  gap: var(--spacing-3); /* Slightly smaller gap */
+  margin: var(--spacing-2) 0; /* Reduced margins */
   width: 100%;
   max-width: 100%;
 }
 
 .feature-card {
   aspect-ratio: 1;
-  border-radius: var(--radius-3xl);
-  padding: var(--spacing-6);
+  border-radius: var(--radius-2xl); /* Slightly smaller radius */
+  padding: var(--spacing-4); /* Reduced padding */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -505,11 +524,11 @@ body {
 }
 
 .card-icon {
-  width: 48px;
-  height: 48px;
-  margin-bottom: var(--spacing-3);
+  width: 40px; /* Smaller icons */
+  height: 40px;
+  margin-bottom: var(--spacing-2); /* Reduced margin */
   background-color: rgba(255, 255, 255, 0.2);
-  border-radius: 16px;
+  border-radius: 12px; /* Smaller radius */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -521,9 +540,9 @@ body {
 }
 
 .card-title {
-  font-size: var(--font-size-lg);
+  font-size: var(--font-size-base); /* Smaller title */
   font-weight: 600;
-  margin-bottom: var(--spacing-2);
+  margin-bottom: var(--spacing-1); /* Reduced margin */
   line-height: 1.2;
 }
 
@@ -1217,17 +1236,19 @@ body {
   .app-container {
     align-items: center;
     justify-content: flex-start;
-    min-height: 100vh;
+    height: 100vh; /* Fixed height for index page */
     width: 100%;
   }
   .main-content {
     align-items: center;
-    justify-content: flex-start;
-    min-height: 0;
+    justify-content: center;
+    height: calc(100vh - 140px); /* Fixed height to prevent scroll */
+    overflow: hidden; /* Prevent scrolling on index page */
     width: 100%;
+    padding: 0 var(--spacing-4) var(--spacing-4); /* Reduced padding */
   }
   .header {
-    padding: var(--spacing-3) var(--spacing-3) var(--spacing-4);
+    padding: var(--spacing-2) var(--spacing-3) var(--spacing-3); /* Reduced mobile padding */
     width: 100%;
     box-sizing: border-box;
   }
@@ -1236,25 +1257,25 @@ body {
     padding: 0 var(--spacing-2);
   }
   .logo-container {
-    gap: var(--spacing-1);
+    gap: var(--spacing-1); /* Minimal gap on mobile */
   }
   .app-title {
-    font-size: var(--font-size-2xl);
+    font-size: var(--font-size-lg); /* Smaller on mobile */
     text-align: center;
     margin-top: var(--spacing-1);
   }
   .app-logo {
-    width: 70px;
-    height: 70px;
+    width: 56px; /* Smaller on mobile */
+    height: 56px;
     margin: 0 auto;
   }
   .profile-btn {
-    width: 42px;
-    height: 42px;
+    width: 36px; /* Smaller on mobile */
+    height: 36px;
   }
   .profile-btn svg {
-    width: 30px;
-    height: 30px;
+    width: 24px; /* Smaller icon on mobile */
+    height: 24px;
   }
   .features-grid {
     gap: var(--spacing-3);

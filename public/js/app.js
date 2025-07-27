@@ -294,9 +294,9 @@ class JustLetItOutApp {
   }
 
   navigateToPairUp() {
-  console.log("Pair Me Up feature coming soon")
-  this.showComingSoon("Pair Me Up")
-}
+    console.log("Navigating to Pair Chat")
+    window.location.href = "pair.html"
+  }
 
   navigateToStories() {
     console.log("Navigating to Stories")

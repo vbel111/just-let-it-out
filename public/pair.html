@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anonymous Chat | Just Let It Out</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/pair-styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="pair-container">
+        <!-- Header -->
+        <header class="pair-header">
+            <button class="back-btn" id="backBtn" aria-label="Go back">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                </svg>
+            </button>
+            <div class="chat-status">
+                <div class="status-indicator" id="statusIndicator"></div>
+                <span id="statusText">Looking for partner...</span>
+            </div>
+            <div class="timer-display" id="timerDisplay" style="display: none;">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M15,1H9V3H15M11,14H13V8H11M19.03,7.39L20.45,5.97C20,5.46 19.55,5 19.04,4.56L17.62,6C16.07,4.74 14.12,4 12,4A9,9 0 0,0 3,13A9,9 0 0,0 12,22C17,22 21,17.97 21,13C21,10.88 20.26,8.93 19.03,7.39Z"/>
+                </svg>
+                <span id="timeRemaining">5:00</span>
+            </div>
+        </header>
+
+        <!-- Main Chat Content -->
+        <main class="chat-main">
+            <!-- Waiting Screen -->
+            <div class="waiting-screen" id="waitingScreen">
+                <div class="waiting-animation">
+                    <div class="pulse-circle"></div>
+                    <div class="pulse-circle delay-1"></div>
+                    <div class="pulse-circle delay-2"></div>
+                </div>
+                <h2>Looking for someone to chat with...</h2>
+                <p>You'll be connected with a random person for a 5-minute anonymous conversation</p>
+                <button class="cancel-search-btn" id="cancelSearchBtn">Cancel</button>
+            </div>
+
+            <!-- Chat Interface -->
+            <div class="chat-interface" id="chatInterface" style="display: none;">
+                <div class="chat-messages" id="chatMessages">
+                    <div class="system-message">
+                        <p>You're now connected with a stranger. Be kind and respectful!</p>
+                        <p>This chat will automatically end in 5 minutes.</p>
+                    </div>
+                </div>
+                
+                <div class="message-input-container">
+                    <div class="input-wrapper">
+                        <textarea 
+                            id="messageInput" 
+                            placeholder="Type your message... (be kind and respectful)" 
+                            maxlength="500"
+                            rows="1"
+                        ></textarea>
+                        <button class="send-btn" id="sendBtn" aria-label="Send message">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M2,21L23,12L2,3V10L17,12L2,14V21Z"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="typing-indicator" id="typingIndicator" style="display: none;">
+                        <span>Partner is typing...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Ended Screen -->
+            <div class="chat-ended-screen" id="chatEndedScreen" style="display: none;">
+                <div class="ended-icon">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M9,12L11,14L15,10M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2Z"/>
+                    </svg>
+                </div>
+                <h2>Chat Session Ended</h2>
+                <p id="endReason">Your 5-minute chat session has completed.</p>
+                <div class="end-actions">
+                    <button class="btn-primary" id="findNewPartnerBtn">Find New Partner</button>
+                    <button class="btn-secondary" id="goHomeBtn">Go Home</button>
+                </div>
+            </div>
+
+            <!-- Disconnection Screen -->
+            <div class="disconnection-screen" id="disconnectionScreen" style="display: none;">
+                <div class="disconnection-icon">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12,2C13.1,2 14,2.9 14,4C14,5.1 13.1,6 12,6C10.9,6 10,5.1 10,4C10,2.9 10.9,2 12,2M21,9V7L15,1H5C3.89,1 3,1.89 3,3V21A2,2 0 0,0 5,23H19A2,2 0 0,0 21,21V9M19,9H14V4H5V21H19V9Z"/>
+                    </svg>
+                </div>
+                <h2>Partner Disconnected</h2>
+                <p>Your chat partner has left the conversation.</p>
+                <div class="end-actions">
+                    <button class="btn-primary" id="findNewPartnerBtn2">Find New Partner</button>
+                    <button class="btn-secondary" id="goHomeBtn2">Go Home</button>
+                </div>
+            </div>
+        </main>
+
+        <!-- Disconnect Button (visible during chat) -->
+        <div class="disconnect-controls" id="disconnectControls" style="display: none;">
+            <button class="disconnect-btn" id="disconnectBtn">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M13,14H11V10H13M13,18H11V16H13M1,21H23L12,2L1,21Z"/>
+                </svg>
+                Leave Chat
+            </button>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module" src="./js/firebase-config.js"></script>
+    <script type="module" src="./js/pair.js"></script>
+</body>
+</html>
