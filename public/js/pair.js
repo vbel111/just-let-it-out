@@ -16,8 +16,7 @@ import {
   limit, 
   serverTimestamp,
   updateDoc,
-  getDocs,
-  writeBatch
+  getDocs
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 // Global variables
@@ -29,36 +28,6 @@ let timeRemaining = 300; // 5 minutes in seconds
 let pairingTimeout = null;
 let messageListener = null;
 let isConnected = false;
-let typingTimer = null;
-let isTyping = false;
-let partnerTyping = false;
-let queueStartTime = null;
-let queueCountListener = null;
-
-// Sound effects
-const sounds = {
-  message: () => {
-    if (soundEnabled) {
-      const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAjiS2PLNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAjiS2PLNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAjiS2PLNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAjiS2PLNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAjiS2PLNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAjiS2PLNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAjiS2PLNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAjiS2PLNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAjiS2PLNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAjiS2PLNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAjiS2PLNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAjiS2PLNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAjiS2PLNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAjiS2PLNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAjiS2PLNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAjiS2PLNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAjiS2PLNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAjiS2PLNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAjiS2PLNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAA==');
-      audio.volume = 0.3;
-      audio.play().catch(() => {}); // Ignore errors
-    }
-  },
-  connect: () => {
-    if (soundEnabled) {
-      const audio = new Audio('data:audio/wav;base64,UklGRpQDAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YXADAADBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAjiS2PLNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAjiS2PLNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAjiS2PLNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAjiS2PLNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAjiS2PLNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAjiS2PLNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAjiS2PLNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAjiS2PLNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAjiS2PLNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAjiS2PLNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAjiS2PLNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAjiS2PLNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAjiS2PLNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAjiS2PLNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAjiS2PLNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAjiS2PLNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAjiS2PLNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAjiS2PLNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAg==');
-      audio.volume = 0.5;
-      audio.play().catch(() => {}); // Ignore errors
-    }
-  },
-  disconnect: () => {
-    if (soundEnabled) {
-      const audio = new Audio('data:audio/wav;base64,UklGRpQDAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YXADAADBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAjiS2PLNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAjiS2PLNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAjiS2PLNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAjiS2PLNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAjiS2PLNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAjiS2PLNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAjiS2PLNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAjiS2PLNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAjiS2PLNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAjiS2PLNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAjiS2PLNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAjiS2PLNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAjiS2PLNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAjiS2PLNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAjiS2PLNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAjiS2PLNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAjiS2PLNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMeAg==');
-      audio.volume = 0.3;
-      audio.play().catch(() => {}); // Ignore errors
-    }
-  }
-};
 
 // DOM elements
 const backBtn = document.getElementById('backBtn');
@@ -81,31 +50,6 @@ const findNewPartnerBtn2 = document.getElementById('findNewPartnerBtn2');
 const goHomeBtn = document.getElementById('goHomeBtn');
 const goHomeBtn2 = document.getElementById('goHomeBtn2');
 const endReason = document.getElementById('endReason');
-
-// Create typing indicator element
-const typingIndicator = document.createElement('div');
-typingIndicator.id = 'typingIndicator';
-typingIndicator.className = 'typing-indicator';
-typingIndicator.innerHTML = `
-  <div class="typing-dots">
-    <span></span>
-    <span></span>
-    <span></span>
-  </div>
-  <span class="typing-text">Partner is typing...</span>
-`;
-typingIndicator.style.display = 'none';
-
-// Create match notification element
-const matchNotification = document.createElement('div');
-matchNotification.id = 'matchNotification';
-matchNotification.className = 'match-notification';
-matchNotification.innerHTML = `
-  <div class="match-icon">🎉</div>
-  <div class="match-text">Match Found!</div>
-  <div class="match-subtext">Starting chat...</div>
-`;
-matchNotification.style.display = 'none';
 
 // Pair Chat App Class
 class PairChatApp {
@@ -139,10 +83,6 @@ class PairChatApp {
       console.log('Anonymous sign-in successful:', result.user.uid);
     } catch (error) {
       console.error('Authentication failed:', error);
-      console.error('Auth error details:', {
-        code: error.code,
-        message: error.message
-      });
       this.showError(`Failed to connect: ${error.message}`);
     }
   }
@@ -175,18 +115,6 @@ class PairChatApp {
     messageInput.addEventListener('input', () => {
       this.adjustTextareaHeight();
       sendBtn.disabled = !messageInput.value.trim();
-      
-      // Handle typing indicator
-      if (currentSessionId && isConnected) {
-        this.handleTyping();
-      }
-    });
-
-    messageInput.addEventListener('keyup', () => {
-      // Handle typing indicator on key release
-      if (currentSessionId && isConnected) {
-        this.handleTyping();
-      }
     });
 
     // Disconnect button
@@ -211,14 +139,6 @@ class PairChatApp {
       window.location.href = 'index.html';
     });
 
-    // Page visibility change (handle tab switching)
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden && isConnected) {
-        // User switched tabs during chat - disconnect
-        this.handleDisconnect(true);
-      }
-    });
-
     // Handle page unload
     window.addEventListener('beforeunload', () => {
       if (isConnected || currentSessionId) {
@@ -229,10 +149,8 @@ class PairChatApp {
 
   async startPairing() {
     console.log('Starting pairing process...');
-    queueStartTime = Date.now();
     this.updateStatus('searching', 'Looking for partner...');
     this.showWaitingScreen();
-    this.startQueueCountListener();
 
     try {
       // Check if user is authenticated
@@ -242,39 +160,26 @@ class PairChatApp {
 
       console.log('Adding user to pairing queue:', currentUser.uid);
       
-      // Add user to pairing queue with metadata for scalable random matching
+      // Add user to pairing queue
       const queueDoc = await addDoc(collection(db, 'pairingQueue'), {
         userId: currentUser.uid,
         timestamp: serverTimestamp(),
-        status: 'waiting',
-        region: 'global', // Can be used for regional matching if needed
-        joinedAt: Date.now(), // For client-side calculations
-        randomSeed: Math.random(), // For random matching order
-        lastMatchAttempt: Date.now() // For preventing rapid re-matching
+        status: 'waiting'
       });
 
       console.log('Successfully added to queue with ID:', queueDoc.id);
 
-      // Set timeout for pairing (60 seconds for better experience)
+      // Set timeout for pairing (30 seconds)
       pairingTimeout = setTimeout(() => {
         this.cancelPairing();
         this.showError('No partners available right now. Please try again later.');
-      }, 60000);
+      }, 30000);
 
       // Listen for pairing
       this.listenForPairing(queueDoc.id);
 
-      // Immediately try to find a match with improved random selection
-      this.tryInstantMatch(queueDoc.id);
-
     } catch (error) {
       console.error('Error starting pairing:', error);
-      console.error('Error details:', {
-        code: error.code,
-        message: error.message,
-        currentUser: currentUser ? currentUser.uid : 'null',
-        db: db ? 'initialized' : 'null'
-      });
       this.showError(`Failed to start pairing: ${error.message}`);
     }
   }
@@ -342,8 +247,7 @@ class PairChatApp {
         const sessionDoc = await addDoc(collection(db, 'chatSessions'), {
           participants: [currentUser.uid, partnerId],
           createdAt: serverTimestamp(),
-          status: 'active',
-          messages: []
+          status: 'active'
         });
 
         currentSessionId = sessionDoc.id;
@@ -376,207 +280,13 @@ class PairChatApp {
 
   startChat() {
     isConnected = true;
-    this.showMatchNotification();
-    
-    // Show match notification for 2 seconds before starting chat
-    setTimeout(() => {
-      this.updateStatus('connected', 'Connected');
-      this.showChatInterface();
-      this.startTimer();
-      this.listenToMessages();
-    }, 2000);
-  }
-
-  showMatchNotification() {
-    // Add notification to body
-    document.body.appendChild(matchNotification);
-    matchNotification.style.display = 'flex';
-    
-    // Hide after 2 seconds
-    setTimeout(() => {
-      if (matchNotification.parentNode) {
-        matchNotification.parentNode.removeChild(matchNotification);
-      }
-      matchNotification.style.display = 'none';
-    }, 2000);
-  }
-
-  startQueueCountListener() {
-    // Listen to real-time queue count updates
-    const queueQuery = query(
-      collection(db, 'pairingQueue'),
-      where('status', '==', 'waiting')
-    );
-
-    queueCountListener = onSnapshot(queueQuery, (snapshot) => {
-      const queueSize = snapshot.size;
-      
-      if (!isConnected && queueStartTime) {
-        const elapsed = Math.floor((Date.now() - queueStartTime) / 1000);
-        const minutes = Math.floor(elapsed / 60);
-        const seconds = elapsed % 60;
-        const timeStr = minutes > 0 ? `${minutes}:${seconds.toString().padStart(2, '0')}` : `${seconds}s`;
-        
-        if (queueSize > 1) {
-          this.updateStatus('searching', `${queueSize} people in queue • ${timeStr}`);
-        } else {
-          this.updateStatus('searching', `Looking for partner... • ${timeStr}`);
-        }
-      }
-    });
-  }
-
-  startQueueTimer() {
-    // This method now primarily handles the initial setup
-    // Real-time updates are handled by startQueueCountListener
-  }
-
-  async tryInstantMatch(myQueueDocId) {
-    try {
-      console.log('Attempting instant match...');
-      
-      // Find available partners with improved random selection for scalability
-      const queueQuery = query(
-        collection(db, 'pairingQueue'),
-        where('status', '==', 'waiting'),
-        where('userId', '!=', currentUser.uid),
-        orderBy('userId'), // Order by userId first for != filter
-        orderBy('randomSeed'), // Then by random seed for randomization
-        limit(10) // Limit for efficiency with large queues
-      );
-
-      const querySnapshot = await getDocs(queueQuery);
-      
-      if (querySnapshot.empty) {
-        console.log('No available partners found');
-        return false;
-      }
-
-      // Select a random partner from available options for better distribution
-      const availablePartners = querySnapshot.docs;
-      const randomIndex = Math.floor(Math.random() * availablePartners.length);
-      const partnerDoc = availablePartners[randomIndex];
-      const partnerData = partnerDoc.data();
-      const partnerQueueDocId = partnerDoc.id;
-
-      console.log('Found potential partner:', partnerData.userId);
-
-      // Attempt to create chat session atomically
-      const sessionId = await this.createChatSession(currentUser.uid, partnerData.userId);
-      
-      if (sessionId) {
-        // Successfully matched! Clean up queue entries
-        await this.cleanupQueueEntries([myQueueDocId, partnerQueueDocId]);
-        
-        // Initialize chat session
-        currentSessionId = sessionId;
-        partnerId = partnerData.userId;
-        
-        this.showMatchFound();
-        this.initializeChatSession();
-        
-        console.log('Instant match successful!');
-        return true;
-      }
-      
-      return false;
-      
-    } catch (error) {
-      console.error('Error in instant match:', error);
-      return false;
-    }
-  }
-
-  async createChatSession(user1Id, user2Id) {
-    try {
-      // Create unique session ID to prevent duplicates
-      const sessionData = {
-        participants: [user1Id, user2Id],
-        status: 'active',
-        createdAt: serverTimestamp(),
-        lastActivity: serverTimestamp(),
-        messages: []
-      };
-
-      const sessionRef = await addDoc(collection(db, 'chatSessions'), sessionData);
-      return sessionRef.id;
-      
-    } catch (error) {
-      console.error('Error creating chat session:', error);
-      return null;
-    }
-  }
-
-  async cleanupQueueEntries(queueDocIds) {
-    try {
-      const batch = writeBatch(db);
-      
-      for (const docId of queueDocIds) {
-        const docRef = doc(db, 'pairingQueue', docId);
-        batch.update(docRef, { status: 'matched' });
-      }
-      
-      await batch.commit();
-      console.log('Queue entries cleaned up successfully');
-      
-    } catch (error) {
-      console.error('Error cleaning up queue entries:', error);
-    }
-  }
-
-  showMatchFound() {
-    // Hide the waiting screen
-    waitingScreen.style.display = 'none';
-    statusText.style.display = 'none';
-    
-    // Show match notification with animation
-    matchNotification.innerHTML = `
-      <div class="match-content">
-        <div class="match-icon">🎉</div>
-        <h3>Match Found!</h3>
-        <p>Get ready to chat with your partner</p>
-      </div>
-    `;
-    matchNotification.style.display = 'flex';
-    
-    // Animate the notification
-    setTimeout(() => {
-      matchNotification.classList.add('show');
-    }, 100);
-    
-    // Hide notification after 3 seconds and show chat
-    setTimeout(() => {
-      matchNotification.classList.remove('show');
-      setTimeout(() => {
-        matchNotification.style.display = 'none';
-        this.showChatScreen();
-      }, 300);
-    }, 3000);
-  }
-
-  showChatScreen() {
-    chatContainer.style.display = 'flex';
-    isConnected = true;
+    this.updateStatus('connected', 'Connected');
+    this.showChatInterface();
     this.startTimer();
+    this.listenToMessages();
   }
 
-  initializeChatSession() {
-    console.log('Initializing chat session...');
-    
-    // Setup chat message listeners
-    this.setupChatListeners();
-    
-    // Clear any existing messages
-    messagesContainer.innerHTML = '';
-    
-    // Show welcome message
-    this.showSystemMessage('🎉 Connected! You have 5 minutes to chat. Be kind and respectful.');
-    
-    // Focus on message input
-    messageInput.focus();
-  }
-
-  setupChatListeners() {
+  startTimer() {
     timeRemaining = 300; // 5 minutes
     timerDisplay.style.display = 'flex';
     
@@ -594,71 +304,6 @@ class PairChatApp {
     const minutes = Math.floor(timeRemaining / 60);
     const seconds = timeRemaining % 60;
     timeRemainingSpan.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-    
-    // Add visual warning when time is running out
-    if (timeRemaining <= 60) {
-      timerDisplay.classList.add('warning');
-      timeRemainingSpan.style.color = '#dc3545';
-    } else if (timeRemaining <= 120) {
-      timerDisplay.classList.add('caution');
-      timeRemainingSpan.style.color = '#fd7e14';
-    }
-    
-    // Show warning message
-    if (timeRemaining === 60) {
-      this.showSystemMessage('⏰ One minute remaining!');
-    } else if (timeRemaining === 30) {
-      this.showSystemMessage('⚠️ 30 seconds left!');
-    }
-  }
-
-  async handleTyping() {
-    if (!isTyping) {
-      isTyping = true;
-      try {
-        await updateDoc(doc(db, 'chatSessions', currentSessionId), {
-          [`typing.${currentUser.uid}`]: serverTimestamp()
-        });
-      } catch (error) {
-        console.error('Error updating typing status:', error);
-      }
-    }
-
-    // Clear existing timer
-    if (typingTimer) {
-      clearTimeout(typingTimer);
-    }
-
-    // Set timer to stop typing indicator after 3 seconds
-    typingTimer = setTimeout(async () => {
-      isTyping = false;
-      try {
-        await updateDoc(doc(db, 'chatSessions', currentSessionId), {
-          [`typing.${currentUser.uid}`]: null
-        });
-      } catch (error) {
-        console.error('Error clearing typing status:', error);
-      }
-    }, 3000);
-  }
-
-  showTypingIndicator() {
-    if (!partnerTyping) {
-      partnerTyping = true;
-      chatMessages.appendChild(typingIndicator);
-      typingIndicator.style.display = 'flex';
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-    }
-  }
-
-  hideTypingIndicator() {
-    if (partnerTyping) {
-      partnerTyping = false;
-      if (typingIndicator.parentNode) {
-        typingIndicator.parentNode.removeChild(typingIndicator);
-      }
-      typingIndicator.style.display = 'none';
-    }
   }
 
   async listenToMessages() {
@@ -687,35 +332,12 @@ class PairChatApp {
       });
     });
 
-    // Listen for partner disconnection and typing indicators
+    // Listen for partner disconnection
     const sessionDoc = doc(db, 'chatSessions', currentSessionId);
     onSnapshot(sessionDoc, (doc) => {
       const sessionData = doc.data();
-      if (sessionData) {
-        // Check if session ended
-        if (sessionData.status === 'ended') {
-          this.endChatSession('partner_disconnected');
-          return;
-        }
-
-        // Check typing indicators
-        if (sessionData.typing && partnerId) {
-          const partnerTypingTime = sessionData.typing[partnerId];
-          if (partnerTypingTime) {
-            const now = new Date();
-            const typingTime = partnerTypingTime.toDate();
-            const timeDiff = now - typingTime;
-            
-            // Show typing indicator if partner typed within last 4 seconds
-            if (timeDiff < 4000) {
-              this.showTypingIndicator();
-            } else {
-              this.hideTypingIndicator();
-            }
-          } else {
-            this.hideTypingIndicator();
-          }
-        }
+      if (sessionData && sessionData.status === 'ended') {
+        this.endChatSession('partner_disconnected');
       }
     });
   }
@@ -725,19 +347,6 @@ class PairChatApp {
     if (!message || !currentSessionId) return;
 
     try {
-      // Clear typing indicator when sending
-      if (typingTimer) {
-        clearTimeout(typingTimer);
-        typingTimer = null;
-      }
-      
-      isTyping = false;
-      
-      // Clear own typing status
-      await updateDoc(doc(db, 'chatSessions', currentSessionId), {
-        [`typing.${currentUser.uid}`]: null
-      });
-
       await addDoc(collection(db, 'chatSessions', currentSessionId, 'messages'), {
         senderId: currentUser.uid,
         message: message,
@@ -822,12 +431,6 @@ class PairChatApp {
       pairingTimeout = null;
     }
 
-    // Clean up queue count listener
-    if (queueCountListener) {
-      queueCountListener();
-      queueCountListener = null;
-    }
-
     // Reset state
     currentSessionId = null;
     partnerId = null;
@@ -840,52 +443,24 @@ class PairChatApp {
       pairingTimeout = null;
     }
     
-    // Clean up queue count listener
-    if (queueCountListener) {
-      queueCountListener();
-      queueCountListener = null;
-    }
-    
     window.location.href = 'index.html';
   }
 
-  async restartPairing() {
-    // Clean up previous session completely
-    await this.handleDisconnect(false);
+  restartPairing() {
+    // Clean up previous session
+    this.handleDisconnect(false);
     
-    // Reset all state variables
+    // Reset state
     currentSessionId = null;
     partnerId = null;
     isConnected = false;
     timeRemaining = 300;
-    isTyping = false;
-    partnerTyping = false;
-    queueStartTime = null;
     
     // Stop any existing listeners
     if (messageListener) {
       messageListener();
       messageListener = null;
     }
-    
-    // Clear any existing timers
-    if (sessionTimer) {
-      clearInterval(sessionTimer);
-      sessionTimer = null;
-    }
-    
-    if (pairingTimeout) {
-      clearTimeout(pairingTimeout);
-      pairingTimeout = null;
-    }
-    
-    if (typingTimer) {
-      clearTimeout(typingTimer);
-      typingTimer = null;
-    }
-    
-    // Hide typing indicator
-    this.hideTypingIndicator();
     
     // Small delay to ensure cleanup is complete
     setTimeout(() => {
@@ -938,15 +513,6 @@ class PairChatApp {
     messageInput.style.height = Math.min(messageInput.scrollHeight, 100) + 'px';
   }
 
-  showSystemMessage(message) {
-    const messageDiv = document.createElement('div');
-    messageDiv.className = 'system-message';
-    messageDiv.innerHTML = `<p>${message}</p>`;
-    
-    chatMessages.appendChild(messageDiv);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-  }
-
   escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
@@ -954,7 +520,6 @@ class PairChatApp {
   }
 
   showError(message) {
-    // Simple error display - could be enhanced with toast notifications
     alert(message);
     window.location.href = 'index.html';
   }
