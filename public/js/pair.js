@@ -29,10 +29,16 @@ let pairingTimeout = null;
 let messageListener = null;
 let sessionListener = null;
 let queueListener = null;
+let typingListener = null;
 let isConnected = false;
 let currentQueueDocId = null;
 let isProcessingPairing = false;
 let isSessionEnded = false;
+let isTyping = false;
+let typingTimeout = null;
+let lastMessageTime = 0;
+let reconnectAttempts = 0;
+let maxReconnectAttempts = 3;
 
 // DOM elements
 const backBtn = document.getElementById('backBtn');
@@ -79,6 +85,51 @@ class PairChatApp {
     });
 
     this.setupEventListeners();
+    
+    // Start periodic cleanup
+    this.startPeriodicCleanup();
+  }
+
+  startPeriodicCleanup() {
+    // Clean up expired entries every 30 seconds
+    setInterval(() => {
+      this.cleanupExpiredEntries();
+    }, 30000);
+  }
+
+  async cleanupExpiredEntries() {
+    try {
+      // Clean up expired queue entries
+      const expiredQueueQuery = query(
+        collection(db, 'pairingQueue'),
+        where('expiresAt', '<=', new Date())
+      );
+      
+      const expiredQueueDocs = await getDocs(expiredQueueQuery);
+      expiredQueueDocs.forEach(async (doc) => {
+        await deleteDoc(doc.ref);
+        console.log('Cleaned up expired queue entry:', doc.id);
+      });
+
+      // Clean up expired sessions
+      const expiredSessionsQuery = query(
+        collection(db, 'chatSessions'),
+        where('expiresAt', '<=', new Date()),
+        where('status', '==', 'active')
+      );
+      
+      const expiredSessionDocs = await getDocs(expiredSessionsQuery);
+      expiredSessionDocs.forEach(async (doc) => {
+        await updateDoc(doc.ref, {
+          status: 'expired',
+          endReason: 'timeout'
+        });
+        console.log('Cleaned up expired session:', doc.id);
+      });
+
+    } catch (error) {
+      console.error('Error during cleanup:', error);
+    }
   }
 
   async authenticateUser() {
@@ -120,6 +171,14 @@ class PairChatApp {
     messageInput.addEventListener('input', () => {
       this.adjustTextareaHeight();
       sendBtn.disabled = !messageInput.value.trim();
+      
+      // Handle typing indicator
+      this.handleTypingIndicator();
+    });
+
+    messageInput.addEventListener('blur', () => {
+      // Stop typing when user leaves input
+      this.stopTyping();
     });
 
     // Disconnect button
@@ -281,7 +340,7 @@ class PairChatApp {
         collection(db, 'pairingQueue'),
         where('status', '==', 'waiting'),
         orderBy('timestamp'),
-        limit(10) // Get multiple candidates
+        limit(5) // Reduce limit for better performance
       );
 
       const queueSnapshot = await getDocs(queueQuery);
@@ -301,12 +360,13 @@ class PairChatApp {
 
         console.log('Found partner:', partnerId);
 
-        // Create chat session atomically
-        const sessionDoc = await addDoc(collection(db, 'chatSessions'), {
+        // Create chat session atomically with retry logic
+        const sessionDoc = await this.createSessionWithRetry({
           participants: [currentUser.uid, partnerId],
           createdAt: serverTimestamp(),
           status: 'active',
-          expiresAt: new Date(Date.now() + 300000) // 5 minutes
+          expiresAt: new Date(Date.now() + 300000), // 5 minutes
+          typingStatus: {}
         });
 
         currentSessionId = sessionDoc.id;
@@ -330,6 +390,19 @@ class PairChatApp {
     } catch (error) {
       console.error('Error pairing with existing user:', error);
       return false;
+    }
+  }
+
+  async createSessionWithRetry(sessionData, attempts = 0) {
+    try {
+      return await addDoc(collection(db, 'chatSessions'), sessionData);
+    } catch (error) {
+      if (attempts < 2) {
+        console.log(`Retrying session creation, attempt ${attempts + 1}`);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        return this.createSessionWithRetry(sessionData, attempts + 1);
+      }
+      throw error;
     }
   }
 
@@ -362,12 +435,36 @@ class PairChatApp {
     console.log('Starting chat with partner:', partnerId);
     isConnected = true;
     isProcessingPairing = false;
+    reconnectAttempts = 0;
     
     this.updateStatus('connected', 'Connected');
     this.showChatInterface();
     this.startTimer();
     this.listenToMessages();
     this.listenToSession();
+    this.listenToTyping();
+    this.addConnectionIndicator();
+  }
+
+  addConnectionIndicator() {
+    // Add typing indicator element if it doesn't exist
+    if (!document.getElementById('typingIndicator')) {
+      const typingIndicator = document.createElement('div');
+      typingIndicator.id = 'typingIndicator';
+      typingIndicator.className = 'typing-indicator';
+      typingIndicator.style.display = 'none';
+      typingIndicator.innerHTML = `
+        <div class="typing-dots">
+          <span>Partner is typing</span>
+          <div class="dots">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        </div>
+      `;
+      chatMessages.appendChild(typingIndicator);
+    }
   }
 
   startTimer() {
@@ -419,8 +516,14 @@ class PairChatApp {
           }
         }
       });
+      
+      // Hide connection error if messages are flowing
+      this.hideConnectionStatus();
+      reconnectAttempts = 0;
     }, (error) => {
       console.error('Error in message listener:', error);
+      this.showConnectionStatus('error', 'Connection issues detected');
+      this.attemptReconnect();
     });
   }
 
@@ -461,34 +564,107 @@ class PairChatApp {
     const message = messageInput.value.trim();
     if (!message || !currentSessionId) return;
 
+    // Rate limiting - prevent spam
+    const now = Date.now();
+    if (now - lastMessageTime < 500) { // 500ms between messages
+      return;
+    }
+    lastMessageTime = now;
+
+    // Input validation
+    if (message.length > 500) {
+      alert('Message too long. Please keep it under 500 characters.');
+      return;
+    }
+
     try {
+      // Stop typing indicator when sending
+      this.stopTyping();
+
+      // Show sending status
+      const tempMessageId = 'temp_' + Date.now();
+      this.displayMessage({
+        senderId: currentUser.uid,
+        message: message,
+        timestamp: { toDate: () => new Date() },
+        status: 'sending'
+      }, tempMessageId);
+
       await addDoc(collection(db, 'chatSessions', currentSessionId, 'messages'), {
         senderId: currentUser.uid,
         message: message,
         timestamp: serverTimestamp()
       });
 
+      // Remove temp message
+      const tempElement = document.querySelector(`[data-message-id="${tempMessageId}"]`);
+      if (tempElement) {
+        tempElement.remove();
+      }
+
       messageInput.value = '';
       sendBtn.disabled = true;
       this.adjustTextareaHeight();
     } catch (error) {
       console.error('Error sending message:', error);
+      
+      // Show error status
+      const tempElement = document.querySelector(`[data-message-id="${tempMessageId}"]`);
+      if (tempElement) {
+        tempElement.classList.add('message-failed');
+        tempElement.setAttribute('title', 'Failed to send. Click to retry.');
+        tempElement.addEventListener('click', () => {
+          messageInput.value = message;
+          tempElement.remove();
+          this.sendMessage();
+        });
+      }
     }
   }
 
   displayMessage(messageData, messageId) {
     const messageDiv = document.createElement('div');
-    messageDiv.className = `message ${messageData.senderId === currentUser.uid ? 'sent' : 'received'}`;
+    const isSent = messageData.senderId === currentUser.uid;
+    messageDiv.className = `message ${isSent ? 'sent' : 'received'}`;
+    
+    if (messageData.status === 'sending') {
+      messageDiv.classList.add('message-sending');
+    }
+    
     messageDiv.setAttribute('data-message-id', messageId);
     
     const time = messageData.timestamp ? new Date(messageData.timestamp.toDate()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
     
     messageDiv.innerHTML = `
       <div class="message-bubble">${this.escapeHtml(messageData.message)}</div>
-      <div class="message-time">${time}</div>
+      <div class="message-time">
+        ${time}
+        ${messageData.status === 'sending' ? '<span class="status-indicator">⏳</span>' : ''}
+      </div>
     `;
 
-    chatMessages.appendChild(messageDiv);
+    // Insert message in chronological order
+    const messages = chatMessages.querySelectorAll('.message');
+    let inserted = false;
+    
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const existingTime = messages[i].querySelector('.message-time').textContent.replace('⏳', '').trim();
+      if (time >= existingTime) {
+        messages[i].insertAdjacentElement('afterend', messageDiv);
+        inserted = true;
+        break;
+      }
+    }
+    
+    if (!inserted) {
+      const systemMessage = chatMessages.querySelector('.system-message');
+      if (systemMessage) {
+        systemMessage.insertAdjacentElement('afterend', messageDiv);
+      } else {
+        chatMessages.appendChild(messageDiv);
+      }
+    }
+
     chatMessages.scrollTop = chatMessages.scrollHeight;
   }
 
@@ -564,6 +740,103 @@ class PairChatApp {
       queueListener = null;
       console.log('Cleaned up queue listener');
     }
+
+    // Stop typing listener
+    if (typingListener) {
+      typingListener();
+      typingListener = null;
+      console.log('Cleaned up typing listener');
+    }
+  }
+
+  // Typing indicator functionality
+  handleTypingIndicator() {
+    if (!isConnected || !currentSessionId) return;
+
+    const hasText = messageInput.value.trim().length > 0;
+    
+    if (hasText && !isTyping) {
+      this.startTyping();
+    } else if (!hasText && isTyping) {
+      this.stopTyping();
+    }
+
+    // Clear existing timeout
+    if (typingTimeout) {
+      clearTimeout(typingTimeout);
+    }
+
+    // Set new timeout to stop typing after 3 seconds of inactivity
+    if (hasText) {
+      typingTimeout = setTimeout(() => {
+        this.stopTyping();
+      }, 3000);
+    }
+  }
+
+  async startTyping() {
+    if (isTyping || !currentSessionId) return;
+
+    isTyping = true;
+    try {
+      await updateDoc(doc(db, 'chatSessions', currentSessionId), {
+        [`typingStatus.${currentUser.uid}`]: serverTimestamp()
+      });
+    } catch (error) {
+      console.error('Error updating typing status:', error);
+    }
+  }
+
+  async stopTyping() {
+    if (!isTyping || !currentSessionId) return;
+
+    isTyping = false;
+    if (typingTimeout) {
+      clearTimeout(typingTimeout);
+      typingTimeout = null;
+    }
+
+    try {
+      await updateDoc(doc(db, 'chatSessions', currentSessionId), {
+        [`typingStatus.${currentUser.uid}`]: null
+      });
+    } catch (error) {
+      console.error('Error clearing typing status:', error);
+    }
+  }
+
+  listenToTyping() {
+    if (!currentSessionId) return;
+
+    const sessionDoc = doc(db, 'chatSessions', currentSessionId);
+    typingListener = onSnapshot(sessionDoc, (doc) => {
+      if (doc.exists()) {
+        const sessionData = doc.data();
+        const typingStatus = sessionData.typingStatus || {};
+        
+        // Check if partner is typing
+        const partnerTyping = typingStatus[partnerId];
+        const typingIndicator = document.getElementById('typingIndicator');
+        
+        if (partnerTyping && typingIndicator) {
+          const typingTime = partnerTyping.toDate();
+          const now = new Date();
+          const timeDiff = now - typingTime;
+          
+          // Show typing indicator if partner typed within last 5 seconds
+          if (timeDiff < 5000) {
+            typingIndicator.style.display = 'block';
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+          } else {
+            typingIndicator.style.display = 'none';
+          }
+        } else if (typingIndicator) {
+          typingIndicator.style.display = 'none';
+        }
+      }
+    }, (error) => {
+      console.error('Error in typing listener:', error);
+    });
   }
 
   async handleDisconnect(manual = true) {
@@ -592,9 +865,76 @@ class PairChatApp {
     isConnected = false;
     isProcessingPairing = false;
     isSessionEnded = false;
+    isTyping = false;
     currentQueueDocId = null;
     timeRemaining = 300;
+    lastMessageTime = 0;
+    reconnectAttempts = 0;
+    
+    if (typingTimeout) {
+      clearTimeout(typingTimeout);
+      typingTimeout = null;
+    }
+    
     console.log('State reset complete');
+  }
+
+  // Connection monitoring
+  showConnectionStatus(status, message) {
+    let statusElement = document.getElementById('connectionStatus');
+    
+    if (!statusElement) {
+      statusElement = document.createElement('div');
+      statusElement.id = 'connectionStatus';
+      statusElement.className = 'connection-status';
+      document.body.appendChild(statusElement);
+    }
+
+    statusElement.textContent = message;
+    statusElement.className = `connection-status ${status}`;
+    statusElement.style.display = 'block';
+
+    // Auto-hide success messages
+    if (status === 'connected') {
+      setTimeout(() => {
+        statusElement.style.display = 'none';
+      }, 3000);
+    }
+  }
+
+  hideConnectionStatus() {
+    const statusElement = document.getElementById('connectionStatus');
+    if (statusElement) {
+      statusElement.style.display = 'none';
+    }
+  }
+
+  // Enhanced error handling with retry logic
+  async attemptReconnect() {
+    if (reconnectAttempts >= maxReconnectAttempts) {
+      this.showConnectionStatus('error', 'Connection lost. Please restart the chat.');
+      return;
+    }
+
+    reconnectAttempts++;
+    this.showConnectionStatus('reconnecting', `Reconnecting... (${reconnectAttempts}/${maxReconnectAttempts})`);
+
+    try {
+      // Try to re-establish session listener
+      if (currentSessionId) {
+        this.listenToSession();
+        this.listenToMessages();
+        this.listenToTyping();
+        
+        this.showConnectionStatus('connected', 'Reconnected successfully!');
+        reconnectAttempts = 0;
+      }
+    } catch (error) {
+      console.error('Reconnection failed:', error);
+      setTimeout(() => {
+        this.attemptReconnect();
+      }, 2000 * reconnectAttempts); // Exponential backoff
+    }
   }
 
   cancelPairing() {
