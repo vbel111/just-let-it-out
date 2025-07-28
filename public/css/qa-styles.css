@@ -7,6 +7,11 @@
   gap: var(--spacing-6);
   max-width: 500px;
   margin: 0 auto;
+  /* Override main-content constraints for QA page */
+  height: auto !important;
+  overflow: visible !important;
+  min-height: calc(100vh - 120px);
+  justify-content: flex-start !important;
 }
 
 /* Q&A Profile Card */
@@ -19,7 +24,10 @@
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
   position: relative;
-  overflow: hidden;
+  
+  margin-top: var(--spacing-4); /* Add some top margin */
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .qa-profile-card::before {
@@ -634,12 +642,20 @@
   .qa-main {
     padding: 0 var(--spacing-3) var(--spacing-16);
     gap: var(--spacing-4);
+    /* Ensure mobile scrolling works properly */
+    height: auto !important;
+    overflow: visible !important;
+    min-height: calc(100vh - 100px);
   }
 
   .qa-profile-card,
   .share-section,
   .questions-section {
     padding: var(--spacing-4);
+  }
+
+  .qa-profile-card {
+    margin-top: var(--spacing-2);
   }
 
   .qa-avatar {

@@ -162,7 +162,7 @@ body {
 
 /* Header Styles */
 .header {
-  padding: var(--spacing-6) var(--spacing-4) var(--spacing-4); /* Reduced padding */
+  padding: var(--spacing-8) var(--spacing-4) var(--spacing-6); /* Increased padding */
   position: relative;
   z-index: 10;
   flex-shrink: 0;
@@ -182,7 +182,7 @@ body {
   flex-direction: column;
   align-items: center;
   flex: 1;
-  gap: var(--spacing-2); /* Reduced gap */
+  gap: var(--spacing-4); /* Increased gap */
 }
 
 .user-status {
@@ -195,8 +195,8 @@ body {
 }
 
 .app-logo {
-  width: 64px; /* Slightly smaller */
-  height: 64px;
+  width: 80px; /* Increased size */
+  height: 80px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -211,14 +211,14 @@ body {
 }
 
 .app-title {
-  font-size: var(--font-size-xl); /* Smaller title */
+  font-size: var(--font-size-2xl); /* Increased title size */
   font-weight: 800;
   color: #1e293b;
   text-align: center;
   text-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
   line-height: 1.1;
-  margin-top: var(--spacing-2); /* Reduced margins */
-  margin-bottom: var(--spacing-1);
+  margin-top: var(--spacing-3); /* Increased margins */
+  margin-bottom: var(--spacing-2);
 }
 
 .user-status {
@@ -236,8 +236,8 @@ body {
   justify-content: center;
   transition: all var(--transition-fast);
   border-radius: 50%;
-  width: 48px; /* Smaller profile button */
-  height: 48px;
+  width: 56px; /* Increased profile button size */
+  height: 56px;
   box-shadow: var(--shadow-lg);
 }
 
@@ -249,8 +249,8 @@ body {
 }
 
 .profile-btn svg {
-  width: 28px; /* Smaller icon */
-  height: 28px;
+  width: 32px; /* Increased icon size */
+  height: 32px;
   color: var(--gray-700);
 }
 
@@ -898,6 +898,11 @@ body {
   align-items: center;
   max-width: 500px;
   margin: 0 auto;
+  /* Override main-content constraints for profile page */
+  height: auto !important;
+  overflow: visible !important;
+  min-height: calc(100vh - 120px);
+  justify-content: flex-start !important;
 }
 
 .profile-section {
@@ -909,6 +914,7 @@ body {
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
   width: 100%;
+  margin-top: var(--spacing-4); /* Add top margin for better visibility */
 }
 
 .profile-avatar {
@@ -1242,13 +1248,13 @@ body {
   .main-content {
     align-items: center;
     justify-content: center;
-    height: calc(100vh - 140px); /* Fixed height to prevent scroll */
+    height: calc(100vh - 200px); /* Increased height to accommodate larger header */
     overflow: hidden; /* Prevent scrolling on index page */
     width: 100%;
-    padding: 0 var(--spacing-4) var(--spacing-4); /* Reduced padding */
+    padding: 0 var(--spacing-3) var(--spacing-3); /* Further reduced padding */
   }
   .header {
-    padding: var(--spacing-2) var(--spacing-3) var(--spacing-3); /* Reduced mobile padding */
+    padding: var(--spacing-4) var(--spacing-3) var(--spacing-4); /* Reduced mobile padding to fit content */
     width: 100%;
     box-sizing: border-box;
   }
@@ -1257,32 +1263,34 @@ body {
     padding: 0 var(--spacing-2);
   }
   .logo-container {
-    gap: var(--spacing-1); /* Minimal gap on mobile */
+    gap: var(--spacing-2); /* Reduced gap to save space */
   }
   .app-title {
-    font-size: var(--font-size-lg); /* Smaller on mobile */
+    font-size: var(--font-size-2xl); /* Slightly reduced from 3xl to fit better */
     text-align: center;
-    margin-top: var(--spacing-1);
+    margin-top: var(--spacing-2); /* Reduced margin */
+    margin-bottom: var(--spacing-1); /* Added bottom margin control */
   }
   .app-logo {
-    width: 56px; /* Smaller on mobile */
-    height: 56px;
+    width: 120px; /* Reduced from 150px to fit better */
+    height: 120px;
     margin: 0 auto;
   }
   .profile-btn {
-    width: 36px; /* Smaller on mobile */
-    height: 36px;
+    width: 52px; /* Increased size on mobile */
+    height: 52px;
   }
   .profile-btn svg {
-    width: 24px; /* Smaller icon on mobile */
-    height: 24px;
+    width: 32px; /* Increased icon size on mobile */
+    height: 32px;
   }
   .features-grid {
-    gap: var(--spacing-3);
+    gap: var(--spacing-2); /* Reduced gap to save space */
     justify-content: center;
+    margin: var(--spacing-1) 0; /* Reduced margins */
   }
   .feature-card {
-    padding: var(--spacing-4);
+    padding: var(--spacing-3); /* Reduced padding */
     margin: 0 auto;
   }
   .card-title {
@@ -1311,7 +1319,11 @@ body {
     padding: 0 var(--spacing-3) var(--spacing-16);
     gap: var(--spacing-6);
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
+    /* Ensure mobile profile page can scroll */
+    height: auto !important;
+    overflow: visible !important;
+    min-height: calc(100vh - 100px);
   }
   .profile-section {
     padding: var(--spacing-6);
@@ -1367,12 +1379,12 @@ body {
 
 @media (max-width: 360px) {
   .main-content {
-    padding: 0 var(--spacing-3) var(--spacing-6);
-    min-height: calc(100vh - 170px);
+    padding: 0 var(--spacing-2) var(--spacing-3); /* Further reduced padding */
+    min-height: calc(100vh - 160px); /* Adjusted height */
   }
 
   .header {
-    padding: var(--spacing-2) var(--spacing-3) var(--spacing-3);
+    padding: var(--spacing-3) var(--spacing-2) var(--spacing-3); /* Reduced padding for very small screens */
   }
 
   .header-content {
@@ -1380,22 +1392,23 @@ body {
   }
 
   .app-logo {
-    width: 56px;
-    height: 56px;
+    width: 80px; /* Balanced size for very small screens */
+    height: 80px;
   }
 
   .app-title {
-    font-size: var(--font-size-lg);
+    font-size: var(--font-size-lg); /* Reduced to fit better */
+    margin-top: var(--spacing-1); /* Reduced margin */
   }
 
   .profile-btn {
-    width: 35x;
-    height: 35px;
+    width: 44px; /* Increased from 35px */
+    height: 44px;
   }
 
   .profile-btn svg {
-    width: 25px;
-    height: 25px;
+    width: 28px; /* Increased from 25px */
+    height: 28px;
   }
 
   .features-grid {
@@ -1413,6 +1426,7 @@ body {
 
   .profile-section {
     padding: var(--spacing-4);
+    margin-top: var(--spacing-2); /* Reduced top margin for small screens */
   }
 
   .profile-avatar img {
