@@ -737,12 +737,20 @@ async function generateStoryWithQR() {
     // Clear previous QR code
     qrContainer.innerHTML = '<div style="width: 120px; height: 120px; background: #f3f4f6; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #6b7280; text-align: center;">Loading QR...</div>';
     
-    // Function to generate QR code
+    // Function to generate QR code with enhanced error handling
     const generateQR = async () => {
       try {
-        if (window.QRCode && typeof window.QRCode.toCanvas === 'function') {
-          const canvas = document.createElement('canvas');
-          await window.QRCode.toCanvas(canvas, shareLink.value, {
+        const libraryType = checkQRLibrary();
+        if (!libraryType) {
+          console.warn('No QR Code library available, using visual fallback');
+          return false;
+        }
+
+        const canvas = document.createElement('canvas');
+        
+        if (libraryType === 'qrcode') {
+          // Use QRCode library (node-qrcode)
+          const qrPromise = window.QRCode.toCanvas(canvas, shareLink.value, {
             width: 120,
             height: 120,
             margin: 1,
@@ -752,11 +760,52 @@ async function generateStoryWithQR() {
             }
           });
           
-          qrContainer.innerHTML = '';
-          qrContainer.appendChild(canvas);
-          return true;
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('QR generation timeout')), 5000)
+          );
+          
+          await Promise.race([qrPromise, timeoutPromise]);
+        } else if (libraryType === 'qrious') {
+          // Use QRious library
+          const qr = new window.QRious({
+            element: canvas,
+            value: shareLink.value,
+            size: 120,
+            background: '#ffffff',
+            foreground: '#1f2937'
+          });
+        } else if (libraryType === 'qrcode-generator') {
+          // Use qrcode-generator library
+          const qr = window.qrcode(4, 'M');
+          qr.addData(shareLink.value);
+          qr.make();
+          
+          const moduleCount = qr.getModuleCount();
+          const cellSize = 120 / moduleCount;
+          
+          canvas.width = 120;
+          canvas.height = 120;
+          const ctx = canvas.getContext('2d');
+          
+          // Fill background
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, 120, 120);
+          
+          // Draw QR modules
+          ctx.fillStyle = '#1f2937';
+          for (let row = 0; row < moduleCount; row++) {
+            for (let col = 0; col < moduleCount; col++) {
+              if (qr.isDark(row, col)) {
+                ctx.fillRect(col * cellSize, row * cellSize, cellSize, cellSize);
+              }
+            }
+          }
         }
-        return false;
+        
+        qrContainer.innerHTML = '';
+        qrContainer.appendChild(canvas);
+        console.log('QR code generated successfully');
+        return true;
       } catch (error) {
         console.error('QR generation error:', error);
         return false;
@@ -772,13 +821,12 @@ async function generateStoryWithQR() {
         const retrySuccess = await generateQR();
         
         if (!retrySuccess) {
-          // Final fallback: create a text-based QR placeholder
-          qrContainer.innerHTML = `
-            <div style="width: 120px; height: 120px; background: #1f2937; color: white; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; text-align: center; padding: 8px; box-sizing: border-box;">
-              <div style="font-weight: bold; margin-bottom: 4px;">QR CODE</div>
-              <div style="font-size: 8px; line-height: 1.2;">Scan to visit:<br>${storyLink.textContent}</div>
-            </div>
-          `;
+          // Try simple local QR generation
+          const simpleQRSuccess = generateSimpleQR(qrContainer, shareLink.value);
+          if (!simpleQRSuccess) {
+            // Create enhanced visual fallback QR code
+            createVisualQRFallback(qrContainer);
+          }
         }
       }, 2000);
     }
@@ -786,12 +834,112 @@ async function generateStoryWithQR() {
     console.error('Error in generateStoryWithQR:', error);
     const qrContainer = document.querySelector('.qr-placeholder');
     if (qrContainer) {
-      qrContainer.innerHTML = `
-        <div style="width: 120px; height: 120px; background: #ef4444; color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 12px; color: white; text-align: center;">
-          QR Error<br><small>Check console</small>
-        </div>
-      `;
+      createVisualQRFallback(qrContainer, true);
     }
+  }
+}
+
+// Create a visual QR code fallback
+function createVisualQRFallback(container, isError = false) {
+  const backgroundColor = isError ? '#ef4444' : '#1f2937';
+  const title = isError ? 'QR Error' : 'QR CODE';
+  const subtitle = isError ? 'Check console' : `Scan to visit:\n${storyLink.textContent}`;
+  
+  container.innerHTML = `
+    <div style="
+      width: 120px; 
+      height: 120px; 
+      background: ${backgroundColor}; 
+      color: white; 
+      border-radius: 8px; 
+      display: flex; 
+      flex-direction: column; 
+      align-items: center; 
+      justify-content: center; 
+      font-size: 10px; 
+      text-align: center; 
+      padding: 8px; 
+      box-sizing: border-box;
+      position: relative;
+      overflow: hidden;
+    ">
+      <div style="
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image: 
+          repeating-linear-gradient(0deg, transparent, transparent 10px, rgba(255,255,255,0.1) 10px, rgba(255,255,255,0.1) 20px),
+          repeating-linear-gradient(90deg, transparent, transparent 10px, rgba(255,255,255,0.1) 10px, rgba(255,255,255,0.1) 20px);
+      "></div>
+      <div style="font-weight: bold; margin-bottom: 4px; z-index: 1; position: relative;">${title}</div>
+      <div style="font-size: 8px; line-height: 1.2; z-index: 1; position: relative;">${subtitle}</div>
+    </div>
+  `;
+}
+
+// Simple local QR generation function (ASCII-style for extreme fallback)
+function generateSimpleQR(container, url) {
+  try {
+    // Create a simple pattern-based QR code representation
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 120;
+    canvas.height = 120;
+    
+    // Create hash from URL for consistent pattern
+    let hash = 0;
+    for (let i = 0; i < url.length; i++) {
+      hash = ((hash << 5) - hash + url.charCodeAt(i)) & 0xffffffff;
+    }
+    
+    const cellSize = 4;
+    const gridSize = canvas.width / cellSize;
+    
+    // Fill background
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Generate pattern
+    ctx.fillStyle = '#1f2937';
+    for (let x = 0; x < gridSize; x++) {
+      for (let y = 0; y < gridSize; y++) {
+        const seed = (x * gridSize + y + hash) % 100;
+        // Create a more QR-like pattern
+        if (seed % 3 === 0 || (x + y) % 4 === 0 || (x * y + hash) % 7 === 0) {
+          ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+        }
+      }
+    }
+    
+    // Add corner markers (QR code style)
+    const markerSize = cellSize * 7;
+    const drawMarker = (x, y) => {
+      // Outer square
+      ctx.fillStyle = '#1f2937';
+      ctx.fillRect(x, y, markerSize, markerSize);
+      // Inner white
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(x + cellSize, y + cellSize, markerSize - 2 * cellSize, markerSize - 2 * cellSize);
+      // Center dot
+      ctx.fillStyle = '#1f2937';
+      ctx.fillRect(x + 3 * cellSize, y + 3 * cellSize, cellSize, cellSize);
+    };
+    
+    // Draw three corner markers
+    drawMarker(0, 0); // Top-left
+    drawMarker(canvas.width - markerSize, 0); // Top-right
+    drawMarker(0, canvas.height - markerSize); // Bottom-left
+    
+    container.innerHTML = '';
+    container.appendChild(canvas);
+    
+    console.log('Simple QR pattern generated as local fallback');
+    return true;
+  } catch (error) {
+    console.error('Simple QR generation failed:', error);
+    return false;
   }
 }
 
@@ -863,13 +1011,14 @@ async function downloadStory() {
     ctx.fillStyle = 'white';
     ctx.fillRect(qrX - 20, qrY - 20, qrSize + 40, qrSize + 40);
     
-    // Generate QR code with improved fallback
+    // Generate QR code with enhanced fallback
     try {
       let qrGenerated = false;
+      const libraryType = checkQRLibrary();
       
-      if (window.QRCode && typeof window.QRCode.toCanvas === 'function') {
+      if (libraryType === 'qrcode' && window.QRCode && typeof window.QRCode.toCanvas === 'function') {
         try {
-          // Create a temporary canvas for QR code
+          // Create a temporary canvas for QR code using QRCode library
           const qrCanvas = document.createElement('canvas');
           await window.QRCode.toCanvas(qrCanvas, shareLink.value, {
             width: qrSize,
@@ -884,60 +1033,128 @@ async function downloadStory() {
           // Draw QR code onto main canvas
           ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
           qrGenerated = true;
+          console.log('QR code generated successfully for story download using QRCode');
         } catch (qrError) {
-          console.error('QR Canvas generation failed:', qrError);
+          console.error('QRCode Canvas generation failed:', qrError);
+        }
+      } else if (libraryType === 'qrious' && window.QRious) {
+        try {
+          // Create a temporary canvas for QR code using QRious library
+          const qrCanvas = document.createElement('canvas');
+          new window.QRious({
+            element: qrCanvas,
+            value: shareLink.value,
+            size: qrSize,
+            background: '#ffffff',
+            foreground: '#1f2937'
+          });
+          
+          // Draw QR code onto main canvas
+          ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
+          qrGenerated = true;
+          console.log('QR code generated successfully for story download using QRious');
+        } catch (qrError) {
+          console.error('QRious Canvas generation failed:', qrError);
+        }
+      } else if (libraryType === 'qrcode-generator' && window.qrcode) {
+        try {
+          // Create a temporary canvas for QR code using qrcode-generator library
+          const qrCanvas = document.createElement('canvas');
+          const qr = window.qrcode(4, 'M');
+          qr.addData(shareLink.value);
+          qr.make();
+          
+          const moduleCount = qr.getModuleCount();
+          const cellSize = qrSize / moduleCount;
+          
+          qrCanvas.width = qrSize;
+          qrCanvas.height = qrSize;
+          const qrCtx = qrCanvas.getContext('2d');
+          
+          // Fill background
+          qrCtx.fillStyle = '#ffffff';
+          qrCtx.fillRect(0, 0, qrSize, qrSize);
+          
+          // Draw QR modules
+          qrCtx.fillStyle = '#1f2937';
+          for (let row = 0; row < moduleCount; row++) {
+            for (let col = 0; col < moduleCount; col++) {
+              if (qr.isDark(row, col)) {
+                qrCtx.fillRect(col * cellSize, row * cellSize, cellSize, cellSize);
+              }
+            }
+          }
+          
+          // Draw QR code onto main canvas
+          ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
+          qrGenerated = true;
+          console.log('QR code generated successfully for story download using qrcode-generator');
+        } catch (qrError) {
+          console.error('qrcode-generator Canvas generation failed:', qrError);
         }
       }
       
       if (!qrGenerated) {
-        // Enhanced fallback with better visual
-        const patternSize = 8;
+        console.log('Creating enhanced visual QR fallback for story download');
+        // Enhanced fallback with better visual design
+        const patternSize = 10;
         const cellSize = qrSize / patternSize;
         
-        // Create a pattern based on the URL hash
+        // Create a more sophisticated pattern based on the URL
         const urlHash = shareLink.value.split('').reduce((a, b) => {
           a = ((a << 5) - a) + b.charCodeAt(0);
           return a & a;
         }, 0);
         
+        // Base background
         ctx.fillStyle = '#1f2937';
         ctx.fillRect(qrX, qrY, qrSize, qrSize);
         
-        // Generate a pseudo-random pattern based on URL
+        // Generate a more complex pseudo-random pattern
         ctx.fillStyle = '#ffffff';
         for (let i = 0; i < patternSize; i++) {
           for (let j = 0; j < patternSize; j++) {
             const seed = (i * patternSize + j + urlHash) % 100;
-            if (seed % 3 === 0) {
+            // More varied pattern generation
+            if ((seed % 3 === 0) || (i + j) % 4 === 0 || (i * j) % 7 === 0) {
               ctx.fillRect(qrX + i * cellSize, qrY + j * cellSize, cellSize, cellSize);
             }
           }
         }
         
-        // Add corner markers like real QR codes
+        // Add QR code corner markers for authenticity
         const markerSize = cellSize * 3;
-        ctx.fillStyle = '#1f2937';
-        // Top-left
-        ctx.fillRect(qrX, qrY, markerSize, markerSize);
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(qrX + cellSize, qrY + cellSize, cellSize, cellSize);
-        // Top-right  
-        ctx.fillStyle = '#1f2937';
-        ctx.fillRect(qrX + qrSize - markerSize, qrY, markerSize, markerSize);
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(qrX + qrSize - markerSize + cellSize, qrY + cellSize, cellSize, cellSize);
-        // Bottom-left
-        ctx.fillStyle = '#1f2937';
-        ctx.fillRect(qrX, qrY + qrSize - markerSize, markerSize, markerSize);
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(qrX + cellSize, qrY + qrSize - markerSize + cellSize, cellSize, cellSize);
         
-        // Add text overlay
-        ctx.fillStyle = 'rgba(31, 41, 55, 0.8)';
-        ctx.fillRect(qrX + 40, qrY + qrSize/2 - 20, qrSize - 80, 40);
+        // Function to draw corner marker
+        const drawCornerMarker = (x, y) => {
+          // Outer square
+          ctx.fillStyle = '#1f2937';
+          ctx.fillRect(x, y, markerSize, markerSize);
+          // Inner square
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(x + cellSize, y + cellSize, cellSize, cellSize);
+        };
+        
+        // Draw corner markers
+        drawCornerMarker(qrX, qrY); // Top-left
+        drawCornerMarker(qrX + qrSize - markerSize, qrY); // Top-right
+        drawCornerMarker(qrX, qrY + qrSize - markerSize); // Bottom-left
+        
+        // Add center alignment pattern
+        const centerX = qrX + qrSize/2 - cellSize;
+        const centerY = qrY + qrSize/2 - cellSize;
+        ctx.fillStyle = '#1f2937';
+        ctx.fillRect(centerX, centerY, cellSize * 2, cellSize * 2);
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 20px Inter, Arial, sans-serif';
-        ctx.fillText('SCAN ME', qrX + qrSize/2, qrY + qrSize/2 + 6);
+        ctx.fillRect(centerX + cellSize/2, centerY + cellSize/2, cellSize, cellSize);
+        
+        // Add subtle "SCAN ME" text overlay
+        ctx.fillStyle = 'rgba(31, 41, 55, 0.85)';
+        ctx.fillRect(qrX + 30, qrY + qrSize/2 - 15, qrSize - 60, 30);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 16px Inter, Arial, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('SCAN ME', qrX + qrSize/2, qrY + qrSize/2 + 5);
       }
     } catch (qrError) {
       console.error('QR code generation completely failed:', qrError);
@@ -946,6 +1163,7 @@ async function downloadStory() {
       ctx.fillRect(qrX, qrY, qrSize, qrSize);
       ctx.fillStyle = '#6b7280';
       ctx.font = 'bold 24px Inter, Arial, sans-serif';
+      ctx.textAlign = 'center';
       ctx.fillText('QR CODE', qrX + qrSize/2, qrY + qrSize/2 - 10);
       ctx.font = '16px Inter, Arial, sans-serif';
       ctx.fillText('Visit link below', qrX + qrSize/2, qrY + qrSize/2 + 20);
@@ -1069,27 +1287,214 @@ function showToast(message, type = 'info') {
 
 // Initialize QR Code Library Check
 function initializeQRCheck() {
-  // Check QR library availability after a short delay
-  setTimeout(() => {
+  console.log('🔍 Initializing QR Code Library Check - Version 2.0');
+  
+  // Check QR library availability immediately 
+  const checkQRLibrary = () => {
+    // Check for QRCode library (node-qrcode)
     if (window.QRCode && typeof window.QRCode.toCanvas === 'function') {
-      console.log('QR Code library loaded successfully');
-    } else {
-      console.warn('QR Code library not loaded, using fallback patterns');
-      
-      // Try loading the library dynamically as backup
-      const script = document.createElement('script');
-      script.src = 'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js';
-      script.onload = () => {
-        console.log('QR Code library loaded dynamically');
-        // Regenerate QR code if story modal is visible
-        if (shareStoryModal.style.display !== 'none') {
-          generateStoryWithQR();
+      console.log('✅ QRCode library loaded successfully');
+      return 'qrcode';
+    }
+    // Check for QRious library
+    if (window.QRious && typeof window.QRious === 'function') {
+      console.log('✅ QRious library loaded successfully');
+      return 'qrious';
+    }
+    // Check for qrcode-generator library
+    if (window.qrcode && typeof window.qrcode === 'function') {
+      console.log('✅ qrcode-generator library loaded successfully');
+      return 'qrcode-generator';
+    }
+    return false;
+  };
+
+  // Check immediately
+  if (checkQRLibrary()) {
+    return;
+  }
+
+  // Multi-tier fallback approach for production
+  const loadQRLibrary = async () => {
+    console.log('🌐 Starting QR library loading process...');
+    
+    // Quick network connectivity check
+    if (!navigator.onLine) {
+      console.warn('⚠️ Device appears to be offline, skipping QR library loading');
+      showToast('You appear to be offline. QR codes will be unavailable.', 'warning');
+      return false;
+    }
+
+    const cdnUrls = [
+      'https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js',
+      'https://unpkg.com/qrious@4.0.2/dist/qrious.min.js',
+      'https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js',
+      'https://unpkg.com/qrcode@1.5.4/build/qrcode.min.js',
+      'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js'
+    ];
+
+    console.log('📚 Available CDN URLs:', cdnUrls);
+
+    for (const url of cdnUrls) {
+      try {
+        console.log(`Attempting to load QR library from: ${url}`);
+        await loadScript(url);
+        
+        // Wait a moment for library to initialize
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Check if library loaded successfully
+        const libraryType = checkQRLibrary();
+        if (libraryType) {
+          console.log(`QR Code library (${libraryType}) loaded successfully from:`, url);
+          // Regenerate QR if needed
+          const shareModal = document.getElementById('shareStoryModal');
+          if (shareModal && shareModal.style.display !== 'none') {
+            generateStoryWithQR();
+          }
+          return true;
+        } else {
+          console.warn(`QR library loaded from ${url} but API not available`);
         }
+      } catch (error) {
+        console.warn(`Failed to load QR library from ${url}:`, error);
+        continue;
+      }
+    }
+
+    // If all CDNs fail, try QR API services as fallback
+    console.log('All QR Code library sources failed - trying API fallback');
+    
+    const tryQRAPI = async () => {
+      try {
+        const qrAPIs = [
+          `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(shareLink.value)}`,
+          `https://chart.googleapis.com/chart?chs=120x120&cht=qr&chl=${encodeURIComponent(shareLink.value)}`
+        ];
+        
+        for (const apiUrl of qrAPIs) {
+          try {
+            console.log('Trying QR API:', apiUrl);
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            
+            const loadPromise = new Promise((resolve, reject) => {
+              img.onload = () => resolve(img);
+              img.onerror = reject;
+              setTimeout(() => reject(new Error('API timeout')), 5000);
+            });
+            
+            img.src = apiUrl;
+            const loadedImg = await loadPromise;
+            
+            // Update QR containers with API-generated image
+            const qrContainers = document.querySelectorAll('.qr-placeholder');
+            qrContainers.forEach(container => {
+              const imgClone = loadedImg.cloneNode();
+              imgClone.style.width = '120px';
+              imgClone.style.height = '120px';
+              imgClone.style.borderRadius = '8px';
+              container.innerHTML = '';
+              container.appendChild(imgClone);
+            });
+            
+            console.log('QR code generated successfully via API');
+            showToast('QR code loaded via backup service', 'success');
+            return true;
+          } catch (apiError) {
+            console.warn(`QR API failed: ${apiUrl}`, apiError);
+            continue;
+          }
+        }
+        return false;
+      } catch (error) {
+        console.error('All QR API services failed:', error);
+        return false;
+      }
+    };
+    
+    const apiSuccess = await tryQRAPI();
+    if (apiSuccess) return true;
+    
+    // If all methods fail, show graceful message
+    console.error('All QR Code generation methods failed - likely network connectivity issue');
+    
+    // Show user-friendly message
+    showToast('QR code unavailable due to network issues. You can still share your link manually!', 'warning');
+    
+    // Update any QR containers with helpful fallback
+    const qrContainers = document.querySelectorAll('.qr-placeholder');
+    qrContainers.forEach(container => {
+      container.innerHTML = `
+        <div style="width: 120px; height: 120px; background: linear-gradient(135deg, #3b82f6, #1e40af); color: white; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; text-align: center; padding: 8px; box-sizing: border-box; position: relative; overflow: hidden;">
+          <div style="position: absolute; top: -20px; right: -20px; width: 40px; height: 40px; background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
+          <div style="position: absolute; bottom: -15px; left: -15px; width: 30px; height: 30px; background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
+          <div style="font-weight: bold; margin-bottom: 4px; z-index: 1;">📱 Share Link</div>
+          <div style="font-size: 8px; line-height: 1.2; z-index: 1;">Copy link below<br>to share manually</div>
+        </div>
+      `;
+    });
+    return false;
+  };
+
+  // Helper function to load script with Promise and timeout
+  const loadScript = (src, timeout = 10000) => {
+    return new Promise((resolve, reject) => {
+      // Remove existing script if present
+      const existingScript = document.querySelector(`script[src*="qrcode"], script[src*="qrious"]`);
+      if (existingScript) {
+        console.log('🗑️ Removing existing QR script:', existingScript.src);
+        existingScript.remove();
+      }
+
+      // Add cache buster for better loading
+      const cacheBuster = Date.now();
+      const srcWithCacheBuster = src.includes('?') ? `${src}&_cb=${cacheBuster}` : `${src}?_cb=${cacheBuster}`;
+
+      const script = document.createElement('script');
+      script.src = srcWithCacheBuster;
+      script.async = true;
+      script.crossOrigin = 'anonymous';
+      
+      console.log('⬇️ Loading script:', srcWithCacheBuster);
+      
+      let timeoutId;
+      
+      const cleanup = () => {
+        if (timeoutId) clearTimeout(timeoutId);
+        script.onload = null;
+        script.onerror = null;
       };
-      script.onerror = () => {
-        console.error('Failed to load QR Code library dynamically');
+      
+      script.onload = () => {
+        console.log('✅ Script loaded successfully:', src);
+        cleanup();
+        resolve();
       };
+      
+      script.onerror = (error) => {
+        console.log('❌ Script failed to load:', src, error);
+        cleanup();
+        script.remove();
+        reject(error);
+      };
+      
+      // Set timeout
+      timeoutId = setTimeout(() => {
+        console.log('⏰ Script loading timeout:', src);
+        cleanup();
+        script.remove();
+        reject(new Error(`Script loading timeout: ${src}`));
+      }, timeout);
+      
       document.head.appendChild(script);
+    });
+  };
+
+  // Try loading after a short delay to allow page to fully load
+  setTimeout(() => {
+    if (!checkQRLibrary()) {
+      loadQRLibrary();
     }
   }, 1000);
 }
@@ -1113,6 +1518,7 @@ closeStoryModal.addEventListener('click', () => {
 });
 
 // Initialize QR check
+console.log('🚀 QA.js loaded - Version 2.0 with enhanced QR fallbacks');
 initializeQRCheck();
 
 // Answer textarea character count

@@ -414,7 +414,7 @@ mark {
 
 .story-actions {
   display: flex;
-  gap: var(--spacing-3);
+  gap: 4px;
   align-items: center;
 }
 
@@ -422,17 +422,18 @@ mark {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--spacing-1);
-  padding: var(--spacing-2) var(--spacing-3);
+  gap: 2px;
+  padding: 4px 6px;
   border: none;
   background: var(--gray-100);
   border-radius: var(--radius-lg);
   cursor: pointer;
   transition: all var(--transition-fast);
-  font-size: var(--font-size-sm);
+  font-size: 10px;
   color: var(--gray-600);
   font-weight: 500;
-  min-height: 32px;
+  min-height: 24px;
+  flex-shrink: 0;
 }
 
 .action-btn:hover {
@@ -451,8 +452,8 @@ mark {
 }
 
 .action-btn svg {
-  width: 16px;
-  height: 16px;
+  width: 12px;
+  height: 12px;
   flex-shrink: 0;
   fill: currentColor;
 }
@@ -1583,5 +1584,24 @@ mark {
     padding: 10px;
     min-width: 44px;
     min-height: 44px;
+  }
+  
+  /* Make story footer wrap on mobile */
+  .story-footer {
+    flex-direction: column;
+    gap: var(--spacing-2);
+    align-items: flex-start;
+  }
+  
+  .story-time {
+    align-self: center;
+    width: 100%;
+    text-align: center;
+    order: 1;
+  }
+  
+  .story-actions {
+    order: 0;
+    align-self: center;
   }
 }
