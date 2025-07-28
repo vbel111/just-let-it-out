@@ -27,10 +27,12 @@ let sessionTimer = null;
 let timeRemaining = 300; // 5 minutes in seconds
 let pairingTimeout = null;
 let messageListener = null;
+let sessionListener = null;
+let queueListener = null;
 let isConnected = false;
-let typingTimer = null;
-let isTyping = false;
-let partnerTyping = false;
+let currentQueueDocId = null;
+let isProcessingPairing = false;
+let isSessionEnded = false;
 
 // DOM elements
 const backBtn = document.getElementById('backBtn');
@@ -53,20 +55,6 @@ const findNewPartnerBtn2 = document.getElementById('findNewPartnerBtn2');
 const goHomeBtn = document.getElementById('goHomeBtn');
 const goHomeBtn2 = document.getElementById('goHomeBtn2');
 const endReason = document.getElementById('endReason');
-
-// Create typing indicator element
-const typingIndicator = document.createElement('div');
-typingIndicator.id = 'typingIndicator';
-typingIndicator.className = 'typing-indicator';
-typingIndicator.innerHTML = `
-  <div class="typing-dots">
-    <span></span>
-    <span></span>
-    <span></span>
-  </div>
-  <span class="typing-text">Partner is typing...</span>
-`;
-typingIndicator.style.display = 'none';
 
 // Pair Chat App Class
 class PairChatApp {
@@ -132,18 +120,6 @@ class PairChatApp {
     messageInput.addEventListener('input', () => {
       this.adjustTextareaHeight();
       sendBtn.disabled = !messageInput.value.trim();
-      
-      // Handle typing indicator
-      if (currentSessionId && isConnected) {
-        this.handleTyping();
-      }
-    });
-
-    messageInput.addEventListener('keyup', () => {
-      // Handle typing indicator on key release
-      if (currentSessionId && isConnected) {
-        this.handleTyping();
-      }
     });
 
     // Disconnect button
@@ -178,6 +154,16 @@ class PairChatApp {
 
   async startPairing() {
     console.log('Starting pairing process...');
+    
+    // Prevent multiple pairing attempts
+    if (isProcessingPairing) {
+      console.log('Already processing pairing, skipping...');
+      return;
+    }
+    
+    isProcessingPairing = true;
+    isSessionEnded = false;
+    
     this.updateStatus('searching', 'Looking for partner...');
     this.showWaitingScreen();
 
@@ -187,140 +173,201 @@ class PairChatApp {
         throw new Error('User not authenticated');
       }
 
+      // Clean up any existing queue entries for this user
+      await this.cleanupUserQueue();
+
       console.log('Adding user to pairing queue:', currentUser.uid);
       
-      // Check current queue size for user feedback
-      const queueSnapshot = await getDocs(collection(db, 'pairingQueue'));
-      const queueSize = queueSnapshot.size;
-      
-      if (queueSize > 0) {
-        this.updateStatus('searching', `${queueSize} people waiting...`);
-      }
-      
-      // Add user to pairing queue
+      // Add user to pairing queue with better error handling
       const queueDoc = await addDoc(collection(db, 'pairingQueue'), {
         userId: currentUser.uid,
         timestamp: serverTimestamp(),
-        status: 'waiting'
+        status: 'waiting',
+        expiresAt: new Date(Date.now() + 60000) // Expire after 1 minute
       });
 
+      currentQueueDocId = queueDoc.id;
       console.log('Successfully added to queue with ID:', queueDoc.id);
 
-      // Set timeout for pairing (30 seconds)
+      // Set timeout for pairing (45 seconds)
       pairingTimeout = setTimeout(() => {
+        console.log('Pairing timeout reached');
         this.cancelPairing();
         this.showError('No partners available right now. Please try again later.');
-      }, 30000);
+      }, 45000);
 
       // Listen for pairing
-      this.listenForPairing(queueDoc.id);
+      await this.listenForPairing();
 
     } catch (error) {
       console.error('Error starting pairing:', error);
+      isProcessingPairing = false;
       this.showError(`Failed to start pairing: ${error.message}`);
     }
   }
 
-  async listenForPairing(queueDocId) {
-    // Check for existing pairs
-    const pairsQuery = query(
-      collection(db, 'chatSessions'),
-      where('participants', 'array-contains', currentUser.uid),
-      where('status', '==', 'active'),
-      limit(1)
-    );
-
-    const unsubscribe = onSnapshot(pairsQuery, (snapshot) => {
-      if (!snapshot.empty) {
-        const sessionDoc = snapshot.docs[0];
-        currentSessionId = sessionDoc.id;
-        const sessionData = sessionDoc.data();
-        
-        // Get partner ID
-        partnerId = sessionData.participants.find(id => id !== currentUser.uid);
-        
-        // Clear pairing timeout
-        if (pairingTimeout) {
-          clearTimeout(pairingTimeout);
-          pairingTimeout = null;
-        }
-
-        // Remove from queue
-        this.removeFromQueue(queueDocId);
-        
-        // Start chat
-        this.startChat();
-        
-        // Unsubscribe from this listener
-        unsubscribe();
+  async cleanupUserQueue() {
+    try {
+      const existingQueueQuery = query(
+        collection(db, 'pairingQueue'),
+        where('userId', '==', currentUser.uid)
+      );
+      
+      const existingDocs = await getDocs(existingQueueQuery);
+      
+      for (const doc of existingDocs.docs) {
+        await deleteDoc(doc.ref);
+        console.log('Cleaned up existing queue entry:', doc.id);
       }
-    });
-
-    // Also try to pair with someone already in queue
-    setTimeout(() => {
-      this.tryPairWithExisting(queueDocId);
-    }, 2000);
+    } catch (error) {
+      console.error('Error cleaning up queue:', error);
+    }
   }
 
-  async tryPairWithExisting(myQueueDocId) {
+  async listenForPairing() {
+    console.log('Setting up pairing listeners...');
+    
+    // First, try to pair immediately with existing users
+    await this.tryPairWithExisting();
+    
+    // If no immediate pairing, listen for new sessions
+    if (!isConnected && !isSessionEnded) {
+      const pairsQuery = query(
+        collection(db, 'chatSessions'),
+        where('participants', 'array-contains', currentUser.uid),
+        where('status', '==', 'active'),
+        limit(1)
+      );
+
+      sessionListener = onSnapshot(pairsQuery, (snapshot) => {
+        console.log('Session listener triggered, docs:', snapshot.docs.length);
+        
+        if (!snapshot.empty && !isConnected && !isSessionEnded) {
+          const sessionDoc = snapshot.docs[0];
+          currentSessionId = sessionDoc.id;
+          const sessionData = sessionDoc.data();
+          
+          console.log('Found active session:', currentSessionId);
+          
+          // Get partner ID
+          partnerId = sessionData.participants.find(id => id !== currentUser.uid);
+          
+          // Clear pairing timeout
+          this.clearPairingTimeout();
+          
+          // Remove from queue
+          this.removeFromQueue();
+          
+          // Start chat
+          this.startChat();
+        }
+      }, (error) => {
+        console.error('Error in session listener:', error);
+      });
+    }
+  }
+
+  async tryPairWithExisting() {
+    if (isConnected || isSessionEnded) {
+      console.log('Already connected or session ended, skipping pairing attempt');
+      return;
+    }
+
     try {
-      // Find someone else in queue
+      console.log('Trying to pair with existing user...');
+      
+      // Find someone else in queue (with better filtering)
       const queueQuery = query(
         collection(db, 'pairingQueue'),
-        where('userId', '!=', currentUser.uid),
         where('status', '==', 'waiting'),
         orderBy('timestamp'),
-        limit(1)
+        limit(10) // Get multiple candidates
       );
 
       const queueSnapshot = await getDocs(queueQuery);
       
-      if (!queueSnapshot.empty) {
-        const partnerDoc = queueSnapshot.docs[0];
+      // Filter out our own entry and expired entries
+      const availablePartners = queueSnapshot.docs.filter(doc => {
+        const data = doc.data();
+        const isNotMe = data.userId !== currentUser.uid;
+        const isNotExpired = !data.expiresAt || data.expiresAt.toDate() > new Date();
+        return isNotMe && isNotExpired;
+      });
+
+      if (availablePartners.length > 0) {
+        const partnerDoc = availablePartners[0];
         const partnerData = partnerDoc.data();
         partnerId = partnerData.userId;
 
-        // Create chat session
+        console.log('Found partner:', partnerId);
+
+        // Create chat session atomically
         const sessionDoc = await addDoc(collection(db, 'chatSessions'), {
           participants: [currentUser.uid, partnerId],
           createdAt: serverTimestamp(),
-          status: 'active'
+          status: 'active',
+          expiresAt: new Date(Date.now() + 300000) // 5 minutes
         });
 
         currentSessionId = sessionDoc.id;
+        console.log('Created session:', currentSessionId);
 
         // Remove both users from queue
-        await deleteDoc(doc(db, 'pairingQueue', myQueueDocId));
+        await this.removeFromQueue();
         await deleteDoc(doc(db, 'pairingQueue', partnerDoc.id));
 
         // Clear timeout
-        if (pairingTimeout) {
-          clearTimeout(pairingTimeout);
-          pairingTimeout = null;
-        }
+        this.clearPairingTimeout();
 
         // Start chat
         this.startChat();
+        
+        return true;
+      } else {
+        console.log('No available partners found, continuing to wait...');
+        return false;
       }
     } catch (error) {
       console.error('Error pairing with existing user:', error);
+      return false;
     }
   }
 
-  async removeFromQueue(queueDocId) {
-    try {
-      await deleteDoc(doc(db, 'pairingQueue', queueDocId));
-    } catch (error) {
-      console.error('Error removing from queue:', error);
+  clearPairingTimeout() {
+    if (pairingTimeout) {
+      clearTimeout(pairingTimeout);
+      pairingTimeout = null;
+      console.log('Cleared pairing timeout');
+    }
+  }
+
+  async removeFromQueue() {
+    if (currentQueueDocId) {
+      try {
+        await deleteDoc(doc(db, 'pairingQueue', currentQueueDocId));
+        console.log('Removed from queue:', currentQueueDocId);
+        currentQueueDocId = null;
+      } catch (error) {
+        console.error('Error removing from queue:', error);
+      }
     }
   }
 
   startChat() {
+    if (isConnected || isSessionEnded) {
+      console.log('Already connected or session ended, skipping chat start');
+      return;
+    }
+
+    console.log('Starting chat with partner:', partnerId);
     isConnected = true;
+    isProcessingPairing = false;
+    
     this.updateStatus('connected', 'Connected');
     this.showChatInterface();
     this.startTimer();
     this.listenToMessages();
+    this.listenToSession();
   }
 
   startTimer() {
@@ -343,56 +390,12 @@ class PairChatApp {
     timeRemainingSpan.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
   }
 
-  async handleTyping() {
-    if (!isTyping) {
-      isTyping = true;
-      try {
-        await updateDoc(doc(db, 'chatSessions', currentSessionId), {
-          [`typing.${currentUser.uid}`]: serverTimestamp()
-        });
-      } catch (error) {
-        console.error('Error updating typing status:', error);
-      }
-    }
-
-    // Clear existing timer
-    if (typingTimer) {
-      clearTimeout(typingTimer);
-    }
-
-    // Set timer to stop typing indicator after 3 seconds
-    typingTimer = setTimeout(async () => {
-      isTyping = false;
-      try {
-        await updateDoc(doc(db, 'chatSessions', currentSessionId), {
-          [`typing.${currentUser.uid}`]: null
-        });
-      } catch (error) {
-        console.error('Error clearing typing status:', error);
-      }
-    }, 3000);
-  }
-
-  showTypingIndicator() {
-    if (!partnerTyping) {
-      partnerTyping = true;
-      chatMessages.appendChild(typingIndicator);
-      typingIndicator.style.display = 'flex';
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-    }
-  }
-
-  hideTypingIndicator() {
-    if (partnerTyping) {
-      partnerTyping = false;
-      if (typingIndicator.parentNode) {
-        typingIndicator.parentNode.removeChild(typingIndicator);
-      }
-      typingIndicator.style.display = 'none';
-    }
-  }
-
   async listenToMessages() {
+    if (!currentSessionId) {
+      console.error('No session ID for message listening');
+      return;
+    }
+
     // Clear existing messages first
     chatMessages.innerHTML = `
       <div class="system-message">
@@ -416,39 +419,42 @@ class PairChatApp {
           }
         }
       });
+    }, (error) => {
+      console.error('Error in message listener:', error);
     });
+  }
 
-    // Listen for partner disconnection and typing indicators
+  listenToSession() {
+    if (!currentSessionId) {
+      console.error('No session ID for session listening');
+      return;
+    }
+
+    // Listen for session changes (partner disconnection, etc.)
     const sessionDoc = doc(db, 'chatSessions', currentSessionId);
-    onSnapshot(sessionDoc, (doc) => {
-      const sessionData = doc.data();
-      if (sessionData) {
-        // Check if session ended
-        if (sessionData.status === 'ended') {
+    const sessionUnsubscribe = onSnapshot(sessionDoc, (doc) => {
+      if (doc.exists()) {
+        const sessionData = doc.data();
+        console.log('Session status:', sessionData.status);
+        
+        if (sessionData.status === 'ended' && isConnected && !isSessionEnded) {
+          console.log('Session ended by partner or system');
           this.endChatSession('partner_disconnected');
-          return;
         }
-
-        // Check typing indicators
-        if (sessionData.typing && partnerId) {
-          const partnerTypingTime = sessionData.typing[partnerId];
-          if (partnerTypingTime) {
-            const now = new Date();
-            const typingTime = partnerTypingTime.toDate();
-            const timeDiff = now - typingTime;
-            
-            // Show typing indicator if partner typed within last 4 seconds
-            if (timeDiff < 4000) {
-              this.showTypingIndicator();
-            } else {
-              this.hideTypingIndicator();
-            }
-          } else {
-            this.hideTypingIndicator();
-          }
+      } else {
+        console.log('Session document no longer exists');
+        if (isConnected && !isSessionEnded) {
+          this.endChatSession('session_deleted');
         }
       }
+    }, (error) => {
+      console.error('Error in session listener:', error);
     });
+
+    // Store the unsubscribe function
+    if (!sessionListener) {
+      sessionListener = sessionUnsubscribe;
+    }
   }
 
   async sendMessage() {
@@ -456,19 +462,6 @@ class PairChatApp {
     if (!message || !currentSessionId) return;
 
     try {
-      // Clear typing indicator when sending
-      if (typingTimer) {
-        clearTimeout(typingTimer);
-        typingTimer = null;
-      }
-      
-      isTyping = false;
-      
-      // Clear own typing status
-      await updateDoc(doc(db, 'chatSessions', currentSessionId), {
-        [`typing.${currentUser.uid}`]: null
-      });
-
       await addDoc(collection(db, 'chatSessions', currentSessionId, 'messages'), {
         senderId: currentUser.uid,
         message: message,
@@ -500,6 +493,13 @@ class PairChatApp {
   }
 
   async endChatSession(reason) {
+    if (isSessionEnded) {
+      console.log('Session already ended, skipping...');
+      return;
+    }
+
+    console.log('Ending chat session, reason:', reason);
+    isSessionEnded = true;
     isConnected = false;
     
     // Clear timer
@@ -508,13 +508,10 @@ class PairChatApp {
       sessionTimer = null;
     }
 
-    // Stop message listener
-    if (messageListener) {
-      messageListener();
-      messageListener = null;
-    }
+    // Stop all listeners
+    this.cleanupListeners();
 
-    // Update session status
+    // Update session status in Firestore
     if (currentSessionId) {
       try {
         await updateDoc(doc(db, 'chatSessions', currentSessionId), {
@@ -522,8 +519,9 @@ class PairChatApp {
           endedAt: serverTimestamp(),
           endReason: reason
         });
+        console.log('Session marked as ended in Firestore');
       } catch (error) {
-        console.error('Error ending session:', error);
+        console.error('Error ending session in Firestore:', error);
       }
     }
 
@@ -532,6 +530,9 @@ class PairChatApp {
       endReason.textContent = 'Your 5-minute chat session has completed.';
       this.showChatEndedScreen();
     } else if (reason === 'partner_disconnected') {
+      this.showDisconnectionScreen();
+    } else if (reason === 'session_deleted') {
+      endReason.textContent = 'Connection lost. Session ended unexpectedly.';
       this.showDisconnectionScreen();
     } else {
       endReason.textContent = 'Chat session ended.';
@@ -542,63 +543,86 @@ class PairChatApp {
     timerDisplay.style.display = 'none';
   }
 
+  cleanupListeners() {
+    // Stop message listener
+    if (messageListener) {
+      messageListener();
+      messageListener = null;
+      console.log('Cleaned up message listener');
+    }
+
+    // Stop session listener
+    if (sessionListener) {
+      sessionListener();
+      sessionListener = null;
+      console.log('Cleaned up session listener');
+    }
+
+    // Stop queue listener
+    if (queueListener) {
+      queueListener();
+      queueListener = null;
+      console.log('Cleaned up queue listener');
+    }
+  }
+
   async handleDisconnect(manual = true) {
-    if (currentSessionId && isConnected) {
+    console.log('Handling disconnect, manual:', manual);
+    
+    if (currentSessionId && isConnected && !isSessionEnded) {
       await this.endChatSession(manual ? 'user_disconnect' : 'page_close');
     }
 
     // Clean up any pairing processes
-    if (pairingTimeout) {
-      clearTimeout(pairingTimeout);
-      pairingTimeout = null;
-    }
+    this.clearPairingTimeout();
+    
+    // Clean up listeners
+    this.cleanupListeners();
+
+    // Remove from queue if still in it
+    await this.removeFromQueue();
 
     // Reset state
+    this.resetState();
+  }
+
+  resetState() {
     currentSessionId = null;
     partnerId = null;
     isConnected = false;
+    isProcessingPairing = false;
+    isSessionEnded = false;
+    currentQueueDocId = null;
+    timeRemaining = 300;
+    console.log('State reset complete');
   }
 
   cancelPairing() {
-    if (pairingTimeout) {
-      clearTimeout(pairingTimeout);
-      pairingTimeout = null;
-    }
+    console.log('Canceling pairing...');
+    
+    this.clearPairingTimeout();
+    this.cleanupListeners();
+    this.removeFromQueue();
+    this.resetState();
     
     window.location.href = 'index.html';
   }
 
   restartPairing() {
+    console.log('Restarting pairing...');
+    
     // Clean up previous session
     this.handleDisconnect(false);
     
-    // Reset state
-    currentSessionId = null;
-    partnerId = null;
-    isConnected = false;
-    timeRemaining = 300;
-    isTyping = false;
-    partnerTyping = false;
-    
-    // Stop any existing listeners
-    if (messageListener) {
-      messageListener();
-      messageListener = null;
-    }
-    
-    // Clear typing timer
-    if (typingTimer) {
-      clearTimeout(typingTimer);
-      typingTimer = null;
-    }
-    
-    // Hide typing indicator
-    this.hideTypingIndicator();
+    // Reset state completely
+    this.resetState();
     
     // Small delay to ensure cleanup is complete
     setTimeout(() => {
-      this.startPairing();
-    }, 1000);
+      if (!isProcessingPairing) {
+        this.startPairing();
+      }
+    }, 1500);
   }
 
   // UI Helper Methods
