@@ -643,27 +643,15 @@ class PairChatApp {
       </div>
     `;
 
-    // Insert message in chronological order
-    const messages = chatMessages.querySelectorAll('.message');
-    let inserted = false;
-    
-    for (let i = messages.length - 1; i >= 0; i--) {
-      const existingTime = messages[i].querySelector('.message-time').textContent.replace('⏳', '').trim();
-      if (time >= existingTime) {
-        messages[i].insertAdjacentElement('afterend', messageDiv);
-        inserted = true;
-        break;
-      }
+    // Insert message in the natural order (just append to the end)
+    // Remove any existing message with the same ID first
+    const existingMessage = document.querySelector(`[data-message-id="${messageId}"]`);
+    if (existingMessage) {
+      existingMessage.remove();
     }
-    
-    if (!inserted) {
-      const systemMessage = chatMessages.querySelector('.system-message');
-      if (systemMessage) {
-        systemMessage.insertAdjacentElement('afterend', messageDiv);
-      } else {
-        chatMessages.appendChild(messageDiv);
-      }
-    }
+
+    // Simply append the message to the end (natural conversation flow)
+    chatMessages.appendChild(messageDiv);
 
     chatMessages.scrollTop = chatMessages.scrollHeight;
   }

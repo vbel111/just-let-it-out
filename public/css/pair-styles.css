@@ -192,7 +192,7 @@
   padding: var(--spacing-4);
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-3);
+  gap: var(--spacing-2);
 }
 
 .chat-messages::-webkit-scrollbar {
@@ -231,8 +231,10 @@
 
 .message {
   max-width: 80%;
-  margin-bottom: var(--spacing-2);
+  margin-bottom: var(--spacing-3);
   animation: slideIn 0.3s ease;
+  clear: both;
+  position: relative;
 }
 
 .message.sent {
@@ -273,6 +275,17 @@
 
 .message.received .message-time {
   text-align: left;
+}
+
+/* Ensure proper message spacing and flow */
+.message + .message {
+  margin-top: var(--spacing-2);
+}
+
+/* Add a bit more space between different senders */
+.message.sent + .message.received,
+.message.received + .message.sent {
+  margin-top: var(--spacing-3);
 }
 
 @keyframes slideIn {
@@ -355,13 +368,6 @@
 .send-btn svg {
   width: 18px;
   height: 18px;
-}
-
-.typing-indicator {
-  padding: var(--spacing-2) 0;
-  color: var(--gray-500);
-  font-size: var(--font-size-sm);
-  font-style: italic;
 }
 
 /* Chat Ended Screen */
@@ -950,7 +956,7 @@
   padding: var(--spacing-3);
   margin: var(--spacing-2) 0;
   background: rgba(108, 117, 125, 0.1);
-  border-radius: var(--border-radius);
+  border-radius: 12px;
   font-size: var(--font-size-sm);
   color: var(--gray-600);
   animation: fadeIn 0.3s ease;
@@ -1003,19 +1009,6 @@
   }
 }
 
-/* Enhanced message styles */
-.message.sent .message-bubble {
-  background: linear-gradient(135deg, var(--primary-600), var(--primary-700));
-  color: white;
-  box-shadow: 0 2px 8px rgba(var(--primary-500), 0.3);
-}
-
-.message.received .message-bubble {
-  background: var(--gray-100);
-  color: var(--gray-800);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
 .message-time {
   font-size: var(--font-size-xs);
   color: var(--gray-500);
@@ -1024,24 +1017,24 @@
 
 /* Connection status improvements */
 .status-indicator.connected {
-  background: var(--success-500);
-  box-shadow: 0 0 10px rgba(var(--success-500), 0.4);
+  background: var(--primary-blue);
+  box-shadow: 0 0 10px rgba(52, 211, 153, 0.4);
 }
 
 .status-indicator.searching {
-  background: var(--warning-500);
+  background: var(--primary-yellow);
   animation: pulse 2s infinite;
 }
 
 @keyframes pulse {
   0% {
-    box-shadow: 0 0 0 0 rgba(var(--warning-500), 0.7);
+    box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.7);
   }
   70% {
-    box-shadow: 0 0 0 10px rgba(var(--warning-500), 0);
+    box-shadow: 0 0 0 10px rgba(251, 191, 36, 0);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(var(--warning-500), 0);
+    box-shadow: 0 0 0 0 rgba(251, 191, 36, 0);
   }
 }
 
@@ -1066,19 +1059,51 @@
   }
 }
 
-/* System message improvements */
-.system-message {
-  text-align: center;
-  margin: var(--spacing-3) 0;
-  padding: var(--spacing-2);
-  background: rgba(108, 117, 125, 0.1);
-  border-radius: var(--border-radius);
-  font-size: var(--font-size-sm);
-  color: var(--gray-600);
-  border-left: 3px solid var(--primary-500);
+/* Message Status */
+.message-sending {
+  opacity: 0.7;
 }
 
-.system-message p {
-  margin: 0;
-  font-weight: 500;
+.message-failed {
+  opacity: 0.5;
+  cursor: pointer;
+  border-left: 3px solid #ef4444;
+}
+
+.message-failed:hover {
+  opacity: 0.8;
+}
+
+.status-indicator {
+  font-size: 10px;
+  margin-left: 4px;
+}
+
+/* Connection Status */
+.connection-status {
+  position: fixed;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(239, 68, 68, 0.9);
+  color: white;
+  padding: var(--spacing-2) var(--spacing-3);
+  border-radius: 8px;
+  font-size: var(--font-size-sm);
+  z-index: 1000;
+  animation: slideDown 0.3s ease;
+  display: none;
+}
+
+.connection-status.reconnecting {
+  background: rgba(251, 191, 36, 0.9);
+}
+
+.connection-status.connected {
+  background: rgba(34, 197, 94, 0.9);
+}
+
+@keyframes slideDown {
+  from { transform: translateX(-50%) translateY(-20px); opacity: 0; }
+  to { transform: translateX(-50%) translateY(0); opacity: 1; }
 }
