@@ -85,9 +85,9 @@
             </div>
 
             <!-- Floating Action Button -->
-            <button class="fab" id="fabButton" aria-label="Quick post">
+            <button class="fab" id="fabButton" aria-label="Info & Legal" onclick="window.location.href='info.html'">
                 <svg viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
                 </svg>
             </button>
         </main>
@@ -116,26 +116,6 @@
             <div class="loading-spinner">
                 <div class="spinner-ring"></div>
                 <p>Connecting...</p>
-            </div>
-        </div>
-
-        <!-- Quick Post Modal -->
-        <div class="modal-overlay" id="quickPostModal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3>Quick Anonymous Post</h3>
-                    <button class="modal-close" id="closeQuickPost">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <textarea id="quickPostText" placeholder="Share what's on your mind... (anonymous)" maxlength="500"></textarea>
-                    <div class="character-count">
-                        <span id="charCount">0</span>/500
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn-secondary" id="cancelQuickPost">Cancel</button>
-                    <button class="btn-primary" id="submitQuickPost">Post Anonymously</button>
-                </div>
             </div>
         </div>
     </div>

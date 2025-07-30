@@ -90,17 +90,6 @@ class JustLetItOutApp {
       })
     })
 
-    // Floating Action Button
-    const fabButton = document.getElementById("fabButton")
-    if (fabButton) {
-      fabButton.addEventListener("click", () => {
-        this.navigateToSendMessage()
-      })
-    }
-
-    // Quick Post Modal
-    this.setupQuickPostModal()
-
     // Keyboard navigation
     document.addEventListener("keydown", (e) => {
       this.handleKeyboardNavigation(e)
@@ -108,66 +97,6 @@ class JustLetItOutApp {
 
     // Touch gestures for mobile
     this.setupTouchGestures()
-  }
-
-  setupQuickPostModal() {
-    const modal = document.getElementById("quickPostModal")
-    const closeBtn = document.getElementById("closeQuickPost")
-    const cancelBtn = document.getElementById("cancelQuickPost")
-    const submitBtn = document.getElementById("submitQuickPost")
-    const textarea = document.getElementById("quickPostText")
-    const charCount = document.getElementById("charCount")
-
-    // Return early if modal doesn't exist
-    if (!modal) return
-
-    // Close modal events
-    if (closeBtn) {
-      closeBtn.addEventListener("click", () => {
-        this.closeQuickPostModal()
-      })
-    }
-    
-    if (cancelBtn) {
-      cancelBtn.addEventListener("click", () => {
-        this.closeQuickPostModal()
-      })
-    }
-
-    // Click outside to close
-    modal.addEventListener("click", (e) => {
-      if (e.target === modal) {
-        this.closeQuickPostModal()
-      }
-    })
-
-    // Character counter
-    if (textarea && charCount) {
-      textarea.addEventListener("input", (e) => {
-        const count = e.target.value.length
-        charCount.textContent = count
-
-        if (count > 450) {
-          charCount.style.color = "var(--primary-pink)"
-        } else {
-          charCount.style.color = "var(--gray-500)"
-        }
-      })
-
-      // Enter key to submit (Ctrl/Cmd + Enter)
-      textarea.addEventListener("keydown", (e) => {
-        if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
-          this.handleQuickPost()
-        }
-      })
-    }
-
-    // Submit post
-    if (submitBtn) {
-      submitBtn.addEventListener("click", () => {
-        this.handleQuickPost()
-      })
-    }
   }
 
   setupTouchGestures() {
@@ -324,58 +253,10 @@ class JustLetItOutApp {
   }
 
   // Modal methods
-  openQuickPostModal() {
-    const modal = document.getElementById("quickPostModal")
-    const textarea = document.getElementById("quickPostText")
-
-    modal.classList.add("active")
-    setTimeout(() => {
-      textarea.focus()
-    }, 300)
-  }
-
-  closeQuickPostModal() {
-    const modal = document.getElementById("quickPostModal")
-    const textarea = document.getElementById("quickPostText")
-    const charCount = document.getElementById("charCount")
-
-    modal.classList.remove("active")
-    textarea.value = ""
-    charCount.textContent = "0"
-    charCount.style.color = "var(--gray-500)"
-  }
-
   closeAllModals() {
     document.querySelectorAll(".modal-overlay").forEach((modal) => {
       modal.classList.remove("active")
     })
-  }
-
-  async handleQuickPost() {
-    const textarea = document.getElementById("quickPostText")
-    const content = textarea.value.trim()
-
-    if (!content) {
-      this.showError("Please enter some content before posting.")
-      return
-    }
-
-    if (content.length > 500) {
-      this.showError("Post is too long. Please keep it under 500 characters.")
-      return
-    }
-
-    try {
-      this.showLoading(true)
-      await createAnonymousPost(content, "quick-post")
-      this.closeQuickPostModal()
-      this.showSuccess("Your anonymous post has been shared!")
-    } catch (error) {
-      console.error("Error creating post:", error)
-      this.showError("Failed to post. Please try again.")
-    } finally {
-      this.showLoading(false)
-    }
   }
 
   // Utility methods
