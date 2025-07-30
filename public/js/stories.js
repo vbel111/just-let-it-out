@@ -1647,7 +1647,10 @@ class StoriesApp {
     let startY = 0;
     let pullDistance = 0;
     let isPulling = false;
-    const refreshThreshold = 80;
+    let startTime = 0;
+    let initialScrollY = 0;
+    const refreshThreshold = 100; // Increased threshold to prevent accidental triggers
+    const minPullTime = 200; // Minimum time for intentional pull
     
     const feed = document.getElementById('storiesFeed');
     if (!feed) return;
@@ -1659,49 +1662,99 @@ class StoriesApp {
       <div class="refresh-icon">↓</div>
       <span class="refresh-text">Pull to refresh</span>
     `;
-    feed.parentNode.insertBefore(refreshIndicator, feed);
+    refreshIndicator.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      font-size: 14px;
+      opacity: 0;
+      z-index: 1000;
+      transition: opacity 0.2s ease;
+      overflow: hidden;
+    `;
+    document.body.appendChild(refreshIndicator);
 
     const updateIndicator = (distance) => {
       const progress = Math.min(distance / refreshThreshold, 1);
-      refreshIndicator.style.height = `${distance}px`;
-      refreshIndicator.style.opacity = progress;
+      const height = Math.min(distance * 0.6, 80);
+      refreshIndicator.style.height = `${height}px`;
+      refreshIndicator.style.opacity = Math.min(progress * 1.5, 1);
+      
+      const icon = refreshIndicator.querySelector('.refresh-icon');
+      const text = refreshIndicator.querySelector('.refresh-text');
       
       if (progress >= 1) {
-        refreshIndicator.querySelector('.refresh-text').textContent = 'Release to refresh';
-        refreshIndicator.querySelector('.refresh-icon').style.transform = 'rotate(180deg)';
+        icon.style.transform = 'rotate(180deg) scale(1.2)';
+        text.textContent = 'Release to refresh';
+        refreshIndicator.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
       } else {
-        refreshIndicator.querySelector('.refresh-text').textContent = 'Pull to refresh';
-        refreshIndicator.querySelector('.refresh-icon').style.transform = 'rotate(0deg)';
+        icon.style.transform = `rotate(${progress * 180}deg)`;
+        text.textContent = 'Pull to refresh';
+        refreshIndicator.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
       }
     };
 
     feed.addEventListener('touchstart', (e) => {
-      if (window.scrollY === 0) {
+      // Only initialize if at the very top of the page
+      if (window.scrollY <= 2) {
         startY = e.touches[0].clientY;
-        isPulling = true;
+        startTime = Date.now();
+        initialScrollY = window.scrollY;
+        isPulling = false;
+        pullDistance = 0;
       }
-    });
+    }, { passive: true });
 
     feed.addEventListener('touchmove', (e) => {
-      if (!isPulling || window.scrollY > 0) return;
+      // Don't do anything if we didn't start at the top or if user has scrolled
+      if (startY === 0 || window.scrollY > initialScrollY + 5) return;
       
       const currentY = e.touches[0].clientY;
-      pullDistance = Math.max(0, currentY - startY);
+      const deltaY = currentY - startY;
+      const currentTime = Date.now();
+      const timeSinceStart = currentTime - startTime;
       
-      if (pullDistance > 0) {
-        e.preventDefault();
-        updateIndicator(pullDistance);
+      // Only consider it a pull if:
+      // 1. Moving down significantly
+      // 2. User has been touching for minimum time (to avoid quick swipes)
+      // 3. At the top of the page
+      if (deltaY > 20 && timeSinceStart > minPullTime && window.scrollY <= 2) {
+        isPulling = true;
+        pullDistance = deltaY - 20; // Subtract the initial threshold
+        
+        // Only prevent default scrolling when we're actually pulling to refresh
+        if (pullDistance > 0) {
+          e.preventDefault();
+          updateIndicator(pullDistance);
+        }
       }
-    });
+    }, { passive: false });
 
     feed.addEventListener('touchend', () => {
-      if (!isPulling) return;
+      if (!isPulling) {
+        // Reset if we weren't actually pulling
+        refreshIndicator.style.height = '0';
+        refreshIndicator.style.opacity = '0';
+        startY = 0;
+        return;
+      }
       
       if (pullDistance >= refreshThreshold) {
-        // Trigger refresh
+        // Show loading state
+        refreshIndicator.style.height = '60px';
+        refreshIndicator.style.opacity = '1';
         refreshIndicator.querySelector('.refresh-text').textContent = 'Refreshing...';
         refreshIndicator.querySelector('.refresh-icon').innerHTML = '⟳';
         refreshIndicator.querySelector('.refresh-icon').style.animation = 'spin 1s linear infinite';
+        refreshIndicator.querySelector('.refresh-icon').style.transform = 'none';
         
         this.refreshStories().finally(() => {
           setTimeout(() => {
@@ -1712,13 +1765,33 @@ class StoriesApp {
           }, 500);
         });
       } else {
+        // Smooth reset
+        refreshIndicator.style.transition = 'height 0.3s ease, opacity 0.3s ease';
         refreshIndicator.style.height = '0px';
         refreshIndicator.style.opacity = '0';
+        
+        setTimeout(() => {
+          refreshIndicator.style.transition = 'opacity 0.2s ease';
+        }, 300);
       }
       
+      // Reset all state
       isPulling = false;
       pullDistance = 0;
-    });
+      startY = 0;
+      startTime = 0;
+      initialScrollY = 0;
+    }, { passive: true });
+
+    // Add CSS for spin animation
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+    `;
+    document.head.appendChild(style);
   }
 
   async refreshStories() {
