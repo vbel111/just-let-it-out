@@ -1164,101 +1164,357 @@ class StoriesApp {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       
-      // Set canvas size for social media (1080x1080 for Instagram)
-      canvas.width = 1080;
-      canvas.height = 1080;
+      // Set high-resolution canvas for better quality
+      const scale = 2; // 2x resolution for crisp rendering
+      canvas.width = 1080 * scale;
+      canvas.height = 1080 * scale;
       
-      // Create gradient background
-      const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-      gradient.addColorStop(0, '#8a9be7ff');
-      gradient.addColorStop(1, '#e493c9ff');
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      // Scale context to maintain logical 1080x1080 coordinates
+      ctx.scale(scale, scale);
       
-      // Add decorative elements
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
-      ctx.beginPath();
-      ctx.arc(200, 200, 100, 0, 2 * Math.PI);
-      ctx.arc(880, 300, 80, 0, 2 * Math.PI);
-      ctx.arc(150, 800, 60, 0, 2 * Math.PI);
-      ctx.arc(900, 850, 90, 0, 2 * Math.PI);
-      ctx.fill();
+      // Enable high-quality rendering
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.textRenderingOptimization = 'optimizeQuality';
       
-      // Add heart icon
-      const heartSize = 120;
-      const heartX = (canvas.width - heartSize) / 2;
-      const heartY = 150;
+      // Create sophisticated gradient background
+      const bgGradient = ctx.createRadialGradient(540, 400, 100, 540, 540, 800);
+      bgGradient.addColorStop(0, '#667eea');
+      bgGradient.addColorStop(0.3, '#764ba2');
+      bgGradient.addColorStop(0.7, '#f093fb');
+      bgGradient.addColorStop(1, '#f5576c');
+      ctx.fillStyle = bgGradient;
+      ctx.fillRect(0, 0, 1080, 1080);
       
-      ctx.fillStyle = '#ffffff';
-      ctx.font = `${heartSize}px Arial`;
+      // Add subtle overlay for depth
+      const overlayGradient = ctx.createLinearGradient(0, 0, 1080, 1080);
+      overlayGradient.addColorStop(0, 'rgba(255, 255, 255, 0.1)');
+      overlayGradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.05)');
+      overlayGradient.addColorStop(1, 'rgba(0, 0, 0, 0.1)');
+      ctx.fillStyle = overlayGradient;
+      ctx.fillRect(0, 0, 1080, 1080);
+      
+      // Add sophisticated decorative elements with gradients
+      this.drawFloatingElements(ctx);
+      
+      // Create content area with subtle backdrop
+      this.drawContentBackdrop(ctx);
+      
+      // Add heart icon with glow effect
+      this.drawHeartWithGlow(ctx, 540, 200);
+      
+      // Add "Anonymous Story" label with elegant typography
+      ctx.save();
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+      ctx.font = '300 32px system-ui, -apple-system, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('❤️', heartX + heartSize/2, heartY + heartSize);
+      ctx.letterSpacing = '2px';
       
-      // Add "Story" label
-      ctx.font = '36px Inter, Arial, sans-serif';
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-      ctx.fillText('Anonymous Story', canvas.width / 2, heartY + heartSize + 80);
+      // Add text shadow for depth
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+      ctx.shadowBlur = 4;
+      ctx.shadowOffsetY = 2;
       
-      // Add story content with word wrapping
-      ctx.fillStyle = 'white';
-      ctx.font = 'bold 42px Inter, Arial, sans-serif';
-      ctx.textAlign = 'center';
+      ctx.fillText('ANONYMOUS STORY', 540, 280);
+      ctx.restore();
       
-      const storyText = storyData.content;
-      const maxWidth = canvas.width - 120;
-      const lineHeight = 60;
-      let y = 450;
+      // Calculate optimal font size based on content length
+      const storyTextData = this.cleanTextForImage(storyData.content);
+      const optimalFontSize = this.calculateOptimalFontSize(ctx, storyTextData.text, 840, 450); // Increased height
       
-      // Word wrap function
-      const wrapText = (text, maxWidth) => {
-        const words = text.split(' ');
-        const lines = [];
-        let currentLine = '';
-        
-        for (let word of words) {
-          const testLine = currentLine + word + ' ';
-          const testWidth = ctx.measureText(testLine).width;
-          
-          if (testWidth > maxWidth && currentLine !== '') {
-            lines.push(currentLine.trim());
-            currentLine = word + ' ';
-          } else {
-            currentLine = testLine;
-          }
-        }
-        lines.push(currentLine.trim());
-        return lines;
-      };
+      // Draw story text with advanced typography
+      this.drawStoryTextAdvanced(ctx, storyTextData.text, optimalFontSize, storyTextData.isTruncated);
       
-      const lines = wrapText(storyText, maxWidth);
-      
-      // Draw story text
-      lines.forEach((line, index) => {
-        ctx.fillText(line, canvas.width / 2, y + (index * lineHeight));
-      });
-      
-      // Add timestamp if available
+      // Add timestamp with elegant styling
       if (storyData.timestamp && storyData.timestamp !== 'Unknown date') {
-        y += (lines.length * lineHeight) + 80;
-        
-        ctx.font = '28px Inter, Arial, sans-serif';
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-        ctx.fillText(storyData.timestamp, canvas.width / 2, y);
+        this.drawTimestamp(ctx, storyData.timestamp);
       }
       
-      // Add app branding at bottom
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-      ctx.font = '28px Inter, Arial, sans-serif';
-      ctx.fillText('Just Let It Out', canvas.width / 2, canvas.height - 80);
-      
-      ctx.font = '24px Inter, Arial, sans-serif';
-      ctx.fillText('Share your story anonymously', canvas.width / 2, canvas.height - 40);
+      // Add sophisticated app branding
+      this.drawAppBranding(ctx);
       
       return canvas;
     } catch (error) {
       console.error('Error generating story image:', error);
       throw error;
     }
+  }
+
+  drawFloatingElements(ctx) {
+    ctx.save();
+    
+    // Create floating geometric shapes with gradients
+    const shapes = [
+      { x: 150, y: 150, size: 80, opacity: 0.1, type: 'circle' },
+      { x: 900, y: 200, size: 60, opacity: 0.08, type: 'circle' },
+      { x: 100, y: 800, size: 50, opacity: 0.12, type: 'circle' },
+      { x: 950, y: 850, size: 70, opacity: 0.1, type: 'circle' },
+      { x: 200, y: 500, size: 40, opacity: 0.06, type: 'triangle' },
+      { x: 850, y: 600, size: 35, opacity: 0.08, type: 'triangle' }
+    ];
+    
+    shapes.forEach(shape => {
+      const gradient = ctx.createRadialGradient(
+        shape.x, shape.y, 0,
+        shape.x, shape.y, shape.size
+      );
+      gradient.addColorStop(0, `rgba(255, 255, 255, ${shape.opacity})`);
+      gradient.addColorStop(1, `rgba(255, 255, 255, 0)`);
+      
+      ctx.fillStyle = gradient;
+      
+      if (shape.type === 'circle') {
+        ctx.beginPath();
+        ctx.arc(shape.x, shape.y, shape.size, 0, 2 * Math.PI);
+        ctx.fill();
+      } else if (shape.type === 'triangle') {
+        ctx.beginPath();
+        ctx.moveTo(shape.x, shape.y - shape.size);
+        ctx.lineTo(shape.x - shape.size, shape.y + shape.size);
+        ctx.lineTo(shape.x + shape.size, shape.y + shape.size);
+        ctx.closePath();
+        ctx.fill();
+      }
+    });
+    
+    ctx.restore();
+  }
+
+  drawContentBackdrop(ctx) {
+    ctx.save();
+    
+    // Create subtle content area backdrop - made taller for more content
+    const backdropGradient = ctx.createLinearGradient(120, 300, 960, 800);
+    backdropGradient.addColorStop(0, 'rgba(255, 255, 255, 0.08)');
+    backdropGradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.12)');
+    backdropGradient.addColorStop(1, 'rgba(255, 255, 255, 0.06)');
+    
+    ctx.fillStyle = backdropGradient;
+    ctx.roundRect(120, 300, 840, 500, 24); // Increased height from 460 to 500
+    ctx.fill();
+    
+    // Add subtle border
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+    ctx.lineWidth = 1;
+    ctx.roundRect(120, 300, 840, 500, 24);
+    ctx.stroke();
+    
+    ctx.restore();
+  }
+
+  drawHeartWithGlow(ctx, x, y) {
+    ctx.save();
+    
+    // Create glow effect
+    ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
+    ctx.shadowBlur = 20;
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '100px system-ui';
+    ctx.textAlign = 'center';
+    ctx.fillText('❤️', x, y);
+    
+    // Add inner glow
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = 'rgba(255, 182, 193, 0.6)';
+    ctx.fillText('❤️', x, y);
+    
+    ctx.restore();
+  }
+
+  cleanTextForImage(text) {
+    // Remove extra whitespace and clean up text for better display
+    const cleaned = text
+      .replace(/\s+/g, ' ')
+      .replace(/[\r\n]+/g, ' ')
+      .trim();
+    
+    // Return object with text and truncation info
+    const maxLength = 400; // Increased from 300
+    if (cleaned.length <= maxLength) {
+      return { text: cleaned, isTruncated: false };
+    }
+    
+    // Find a good breaking point (end of sentence or word)
+    let truncateAt = maxLength;
+    const lastSentence = cleaned.lastIndexOf('.', maxLength);
+    const lastExclamation = cleaned.lastIndexOf('!', maxLength);
+    const lastQuestion = cleaned.lastIndexOf('?', maxLength);
+    const lastSpace = cleaned.lastIndexOf(' ', maxLength);
+    
+    // Use the best breaking point
+    const sentenceEnd = Math.max(lastSentence, lastExclamation, lastQuestion);
+    if (sentenceEnd > maxLength - 100) {
+      truncateAt = sentenceEnd + 1;
+    } else if (lastSpace > maxLength - 50) {
+      truncateAt = lastSpace;
+    }
+    
+    return {
+      text: cleaned.substring(0, truncateAt),
+      isTruncated: true
+    };
+  }
+
+  calculateOptimalFontSize(ctx, text, maxWidth, maxHeight) {
+    let fontSize = 52; // Increased starting size
+    let lines = [];
+    
+    // Find optimal font size that fits the content area
+    do {
+      ctx.font = `600 ${fontSize}px system-ui, -apple-system, sans-serif`;
+      lines = this.wrapTextAdvanced(ctx, text, maxWidth - 60);
+      fontSize -= 2;
+    } while ((lines.length * (fontSize + 10) > maxHeight) && fontSize > 26);
+    
+    return Math.max(fontSize + 2, 30); // Increased minimum readable size
+  }
+
+  wrapTextAdvanced(ctx, text, maxWidth) {
+    const words = text.split(' ');
+    const lines = [];
+    let currentLine = '';
+    
+    for (let word of words) {
+      const testLine = currentLine + (currentLine ? ' ' : '') + word;
+      const testWidth = ctx.measureText(testLine).width;
+      
+      if (testWidth > maxWidth && currentLine !== '') {
+        lines.push(currentLine);
+        currentLine = word;
+      } else {
+        currentLine = testLine;
+      }
+    }
+    
+    if (currentLine) {
+      lines.push(currentLine);
+    }
+    
+    return lines;
+  }
+
+  drawStoryTextAdvanced(ctx, text, fontSize, isTruncated = false) {
+    ctx.save();
+    
+    const maxWidth = 840;
+    const lineHeight = fontSize * 1.3; // Slightly tighter line height
+    const startY = 380; // Moved up slightly
+    
+    // Set advanced typography
+    ctx.font = `600 ${fontSize}px system-ui, -apple-system, BlinkMacSystemFont, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#ffffff';
+    
+    // Add text shadow for depth and readability
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+    ctx.shadowBlur = 6;
+    ctx.shadowOffsetY = 2;
+    
+    const lines = this.wrapTextAdvanced(ctx, text, maxWidth - 60);
+    const totalHeight = lines.length * lineHeight;
+    const adjustedStartY = Math.max(startY, 540 - totalHeight / 2);
+    
+    // Draw main story text
+    lines.forEach((line, index) => {
+      const y = adjustedStartY + (index * lineHeight);
+      
+      // Add subtle stroke for better readability
+      ctx.save();
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+      ctx.lineWidth = 2;
+      ctx.strokeText(line, 540, y);
+      ctx.restore();
+      
+      // Draw main text
+      ctx.fillText(line, 540, y);
+    });
+    
+    // Add "read more" indicator if text was truncated
+    if (isTruncated) {
+      const readMoreY = adjustedStartY + (lines.length * lineHeight) + 30;
+      
+      // Add continuation indicator
+      ctx.save();
+      ctx.font = `400 ${Math.max(fontSize * 0.6, 24)}px system-ui, -apple-system, sans-serif`;
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+      ctx.shadowBlur = 3;
+      ctx.shadowOffsetY = 1;
+      
+      ctx.fillText('...', 540, readMoreY);
+      
+      // Add "Read full story" text
+      const readFullY = readMoreY + 35;
+      ctx.font = `500 ${Math.max(fontSize * 0.5, 22)}px system-ui, -apple-system, sans-serif`;
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+      ctx.fillText('Read the full story at', 540, readFullY);
+      
+      // Add website URL with emphasis
+      const urlY = readFullY + 30;
+      ctx.font = `600 ${Math.max(fontSize * 0.55, 24)}px system-ui, -apple-system, sans-serif`;
+      ctx.fillStyle = '#ffffff';
+      ctx.letterSpacing = '1px';
+      
+      // Add glow effect to URL
+      ctx.shadowColor = 'rgba(255, 255, 255, 0.6)';
+      ctx.shadowBlur = 8;
+      ctx.fillText('justletitout.app', 540, urlY);
+      
+      ctx.restore();
+    }
+    
+    ctx.restore();
+  }
+
+  drawTimestamp(ctx, timestamp) {
+    ctx.save();
+    
+    ctx.font = '400 22px system-ui, -apple-system, sans-serif'; // Slightly smaller
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+    
+    // Add subtle shadow
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+    ctx.shadowBlur = 3;
+    ctx.shadowOffsetY = 1;
+    
+    ctx.fillText(timestamp, 540, 840); // Moved down slightly
+    
+    ctx.restore();
+  }
+
+  drawAppBranding(ctx) {
+    ctx.save();
+    
+    // App name with elegant styling
+    ctx.font = '300 26px system-ui, -apple-system, sans-serif'; // Slightly smaller
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+    ctx.letterSpacing = '1px';
+    
+    // Add subtle shadow
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+    ctx.shadowBlur = 3;
+    ctx.shadowOffsetY = 1;
+    
+    ctx.fillText('Just Let It Out', 540, 970); // Moved down
+    
+    // Tagline with lighter weight
+    ctx.font = '300 20px system-ui, -apple-system, sans-serif'; // Slightly smaller
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+    ctx.letterSpacing = '0.5px';
+    
+    ctx.fillText('Share your story anonymously', 540, 995); // Moved down
+    
+    // Add subtle decorative line
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(440, 945); // Moved up
+    ctx.lineTo(640, 945);
+    ctx.stroke();
+    
+    ctx.restore();
   }
 
   async handleBookmark(button) {
