@@ -6,6 +6,25 @@ import {
   onAuthStateChanged, signInAnonymously, serverTimestamp
 } from './firebase-config.js';
 
+// Analytics tracking
+const analytics = {
+  track: (event, properties = {}) => {
+    if (typeof gtag !== 'undefined') {
+      gtag('event', event, properties);
+    }
+    if (window.location.hostname === 'localhost') {
+      console.log('Analytics:', event, properties);
+    }
+  },
+  
+  trackQA: (action, details = {}) => {
+    analytics.track('qa_event', { action, ...details });
+  }
+};
+
+// Track page view
+analytics.track('page_view', { page: 'qa' });
+
 // DOM Elements
 const qaAvatar = document.getElementById('qaAvatar');
 const qaUsername = document.getElementById('qaUsername');

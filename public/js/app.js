@@ -1,6 +1,30 @@
 // Main Application Logic
 import { initializeAuth, createAnonymousPost } from "./firebase-config.js"
 
+// Initialize analytics tracking
+const analytics = {
+  track: (event, properties = {}) => {
+    if (typeof gtag !== 'undefined') {
+      gtag('event', event, properties);
+    }
+    // Log in development
+    if (window.location.hostname === 'localhost') {
+      console.log('Analytics:', event, properties);
+    }
+  },
+  
+  trackFeature: (feature) => {
+    analytics.track('feature_click', { feature });
+  },
+  
+  trackPageView: (page) => {
+    analytics.track('page_view', { page });
+  }
+};
+
+// Track page view
+analytics.trackPageView('home');
+
 // Auto-unregister service workers in development (localhost)
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
@@ -71,6 +95,10 @@ class JustLetItOutApp {
       card.addEventListener("click", (e) => {
         e.preventDefault()
         console.log("Feature card clicked:", feature)
+        
+        // Track feature usage
+        analytics.trackFeature(feature)
+        
         this.handleFeatureNavigation(feature, e)
       })
       

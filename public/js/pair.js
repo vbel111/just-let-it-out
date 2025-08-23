@@ -19,6 +19,25 @@ import {
   getDocs
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
+// Analytics tracking
+const analytics = {
+  track: (event, properties = {}) => {
+    if (typeof gtag !== 'undefined') {
+      gtag('event', event, properties);
+    }
+    if (window.location.hostname === 'localhost') {
+      console.log('Analytics:', event, properties);
+    }
+  },
+  
+  trackChat: (action, details = {}) => {
+    analytics.track('chat_event', { action, ...details });
+  }
+};
+
+// Track page view
+analytics.track('page_view', { page: 'pair_chat' });
+
 // Global variables
 let currentUser = null;
 let currentSessionId = null;
@@ -213,6 +232,9 @@ class PairChatApp {
 
   async startPairing() {
     console.log('Starting pairing process...');
+    
+    // Track pairing start
+    analytics.trackChat('pairing_started');
     
     // Prevent multiple pairing attempts
     if (isProcessingPairing) {
@@ -433,6 +455,10 @@ class PairChatApp {
     }
 
     console.log('Starting chat with partner:', partnerId);
+    
+    // Track successful pairing
+    analytics.trackChat('chat_started', { session_id: currentSessionId });
+    
     isConnected = true;
     isProcessingPairing = false;
     reconnectAttempts = 0;
