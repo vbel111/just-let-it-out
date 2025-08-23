@@ -4,10 +4,11 @@ import { initializeAuth, createAnonymousPost } from "./firebase-config.js"
 // Initialize analytics tracking
 const analytics = {
   track: (event, properties = {}) => {
-    if (typeof gtag !== 'undefined') {
-      gtag('event', event, properties);
+    // Use Vercel Analytics if available
+    if (typeof window.va === 'function') {
+      window.va('track', event, properties);
     }
-    // Log in development
+    // Fallback for development
     if (window.location.hostname === 'localhost') {
       console.log('Analytics:', event, properties);
     }

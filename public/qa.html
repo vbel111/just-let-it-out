@@ -12,10 +12,10 @@
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
     
     <!-- Vercel Analytics -->
-    <script type="module">
-        import { inject } from 'https://cdn.skypack.dev/@vercel/analytics';
-        inject();
+    <script>
+      window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
     </script>
+    <script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>
     <div class="app-container">

@@ -22,8 +22,8 @@ import {
 // Analytics tracking
 const analytics = {
   track: (event, properties = {}) => {
-    if (typeof gtag !== 'undefined') {
-      gtag('event', event, properties);
+    if (typeof window.va === 'function') {
+      window.va('track', event, properties);
     }
     if (window.location.hostname === 'localhost') {
       console.log('Analytics:', event, properties);
