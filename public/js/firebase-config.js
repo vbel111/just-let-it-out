@@ -45,21 +45,16 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js"
 
 // Firebase configuration object
-// Environment variables are injected by Vercel at build time
+// Direct configuration for production deployment
 const firebaseConfig = {
-  apiKey: "%VITE_FIREBASE_API_KEY%",
-  authDomain: "%VITE_FIREBASE_AUTH_DOMAIN%",
-  databaseURL: "%VITE_FIREBASE_DATABASE_URL%",
-  projectId: "%VITE_FIREBASE_PROJECT_ID%",
-  storageBucket: "%VITE_FIREBASE_STORAGE_BUCKET%",
-  messagingSenderId: "%VITE_FIREBASE_MESSAGING_SENDER_ID%",
-  appId: "%VITE_FIREBASE_APP_ID%",
-  measurementId: "%VITE_FIREBASE_MEASUREMENT_ID%",
-}
-
-// Validate configuration
-if (!firebaseConfig.apiKey || firebaseConfig.apiKey.includes('%')) {
-  throw new Error('Firebase configuration not properly injected. Please check Vercel environment variables.');
+  apiKey: "AIzaSyC38AD0tCNl7k5gtW7JsUAD7m00FCKuQfs",
+  authDomain: "justletitout-d4f47.firebaseapp.com",
+  databaseURL: "https://justletitout-d4f47-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "justletitout-d4f47",
+  storageBucket: "justletitout-d4f47.firebasestorage.app",
+  messagingSenderId: "551225449276",
+  appId: "1:551225449276:web:5487e25f8504ba8bd69c39",
+  measurementId: "G-0FGR52MSR4",
 }
 if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
   throw new Error('Firebase configuration is missing. Please set environment variables in Vercel dashboard.');

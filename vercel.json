@@ -1,6 +1,4 @@
 {
-  "buildCommand": "npm run build",
-  "outputDirectory": "public",
   "headers": [
     {
       "source": "/(.*)",
@@ -23,7 +21,11 @@
   "rewrites": [
     {
       "source": "/",
-      "destination": "/index.html"
+      "destination": "/public/index.html"
+    },
+    {
+      "source": "/((?!public).*)",
+      "destination": "/public/$1"
     }
   ]
 }
