@@ -24,41 +24,8 @@ import {
   where,
   increment,
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js"
-import {
-  getDatabase,
-  ref,
-  push,
-  onValue,
-  serverTimestamp as rtdbServerTimestamp,
-  query as rtdbQuery,
-  orderByChild,
-  limitToLast,
-} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js"
-import {
-  getStorage,
-  ref as storageRef,
-  uploadBytes,
-  getDownloadURL,
-  deleteObject,
-  uploadBytesResumable,
-  getMetadata,
-} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js"
-
-// Firebase configuration object
-const firebaseConfig = {
-  apiKey: "AIzaSyC38AD0tCNl7k5gtW7JsUAD7m00FCKuQfs",
-  authDomain: "justletitout-d4f47.firebaseapp.com",
-  databaseURL: "https://justletitout-d4f47-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "justletitout-d4f47",
-  storageBucket: "justletitout-d4f47.firebasestorage.app",
-  messagingSenderId: "551225449276",
-  appId: "1:551225449276:web:5487e25f8504ba8bd69c39",
-  measurementId: "G-0FGR52MSR4",
-}
-if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
-  throw new Error('Firebase configuration is missing. Please set environment variables in Vercel dashboard.');
-}
-
+// Export Firestore function aliases for compatibility
+export { firestoreQuery as query, firestoreOrderBy as orderBy, firestoreLimit as limit };
 // Initialize Firebase
 const app = initializeApp(firebaseConfig)
 
