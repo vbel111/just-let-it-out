@@ -2,7 +2,7 @@
 import {
   auth, db,
   onAuthStateChanged, signInAnonymously,
-  doc, collection, addDoc, deleteDoc, onSnapshot, query, where, orderBy, firestoreLimit, serverTimestamp, updateDoc, getDocs
+  doc, collection, addDoc, deleteDoc, onSnapshot, query, where, firestoreOrderBy, firestoreLimit, serverTimestamp, updateDoc, getDocs
 } from './firebase-config.js';
 
 // Analytics tracking
@@ -347,7 +347,7 @@ class PairChatApp {
       const queueQuery = query(
   collection(db, 'pairingQueue'),
   where('status', '==', 'waiting'),
-  orderBy('timestamp'),
+  firestoreOrderBy('timestamp'),
   firestoreLimit(5) // Reduce limit for better performance
       );
 
@@ -514,8 +514,8 @@ class PairChatApp {
     `;
 
     const messagesQuery = query(
-      collection(db, 'chatSessions', currentSessionId, 'messages'),
-      orderBy('timestamp')
+  collection(db, 'chatSessions', currentSessionId, 'messages'),
+  firestoreOrderBy('timestamp')
     );
 
     messageListener = onSnapshot(messagesQuery, (snapshot) => {
