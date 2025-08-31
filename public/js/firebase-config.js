@@ -45,7 +45,6 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js"
 
 // Firebase configuration object
-// Direct configuration for production deployment
 const firebaseConfig = {
   apiKey: "AIzaSyC38AD0tCNl7k5gtW7JsUAD7m00FCKuQfs",
   authDomain: "justletitout-d4f47.firebaseapp.com",
