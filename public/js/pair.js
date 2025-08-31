@@ -2,7 +2,7 @@
 import {
   auth, db,
   onAuthStateChanged, signInAnonymously,
-  doc, collection, addDoc, deleteDoc, onSnapshot, query, where, orderBy, limit, serverTimestamp, updateDoc, getDocs
+  doc, collection, addDoc, deleteDoc, onSnapshot, query, where, orderBy, firestoreLimit, serverTimestamp, updateDoc, getDocs
 } from './firebase-config.js';
 
 // Analytics tracking
@@ -300,10 +300,10 @@ class PairChatApp {
     // If no immediate pairing, listen for new sessions
     if (!isConnected && !isSessionEnded) {
       const pairsQuery = query(
-        collection(db, 'chatSessions'),
-        where('participants', 'array-contains', currentUser.uid),
-        where('status', '==', 'active'),
-        limit(1)
+  collection(db, 'chatSessions'),
+  where('participants', 'array-contains', currentUser.uid),
+  where('status', '==', 'active'),
+  firestoreLimit(1)
       );
 
       sessionListener = onSnapshot(pairsQuery, (snapshot) => {
@@ -345,10 +345,10 @@ class PairChatApp {
       
       // Find someone else in queue (with better filtering)
       const queueQuery = query(
-        collection(db, 'pairingQueue'),
-        where('status', '==', 'waiting'),
-        orderBy('timestamp'),
-        limit(5) // Reduce limit for better performance
+  collection(db, 'pairingQueue'),
+  where('status', '==', 'waiting'),
+  orderBy('timestamp'),
+  firestoreLimit(5) // Reduce limit for better performance
       );
 
       const queueSnapshot = await getDocs(queueQuery);
