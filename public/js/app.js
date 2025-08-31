@@ -181,6 +181,10 @@ class JustLetItOutApp {
         console.log("Navigating to send message")
         this.navigateToSendMessage()
         break
+      case "rate-me":
+        console.log("Navigating to rate me")
+        this.navigateToRateMe()
+        break
       case "support":
         console.log("Navigating to support")
         this.navigateToSupport()
@@ -201,8 +205,8 @@ class JustLetItOutApp {
       case "home":
         this.navigateToHome()
         break
-      case "chat":
-        this.navigateToChat()
+      case "support":
+        this.navigateToSupport()
         break
       default:
         console.log("Unknown navigation:", nav)
@@ -264,6 +268,16 @@ class JustLetItOutApp {
   navigateToSendMessage() {
     console.log("Navigating to Q&A")
     window.location.href = "qa.html"
+  }
+
+  navigateToRateMe() {
+    console.log("Navigating to Rate Me")
+    window.location.href = "rate-me.html"
+  }
+
+  navigateToRateMeDashboard() {
+    console.log("Navigating to Rate Me Dashboard")
+    window.location.href = "rate-me-dashboard.html"
   }
 
   navigateToSupport() {

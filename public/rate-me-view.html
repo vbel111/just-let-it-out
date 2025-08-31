@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rate This Photo - Just Let It Out</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/rate-me-view-styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Vercel Analytics -->
+    <script>
+      window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+    </script>
+    <script defer src="/_vercel/insights/script.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="rating-header">
+            <div class="header-content">
+                <button class="back-btn" id="backBtn" aria-label="Go back">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                    </svg>
+                </button>
+                <h1 class="page-title">Rate Anonymously</h1>
+                <button class="report-btn" id="reportBtn" aria-label="Report content">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M14.4 6L14 4H5v17h2v-7h5.6l.4 2h7V6z"/>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="rating-main">
+            <!-- Loading State -->
+            <div class="loading-state" id="loadingState">
+                <div class="loading-spinner">
+                    <div class="spinner-ring"></div>
+                    <p>Loading photo...</p>
+                </div>
+            </div>
+
+            <!-- Photo Not Found -->
+            <div class="error-state" id="errorState" style="display: none;">
+                <div class="error-icon">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                    </svg>
+                </div>
+                <h2>Photo Not Found</h2>
+                <p>This photo may have expired or been removed.</p>
+                <button class="btn primary" onclick="window.location.href='index.html'">
+                    Go Home
+                </button>
+            </div>
+
+            <!-- Photo Rating Interface -->
+            <div class="rating-interface" id="ratingInterface" style="display: none;">
+                <!-- Photo Display -->
+                <div class="photo-container">
+                    <img id="photoDisplay" alt="Photo to rate" />
+                    <div class="photo-overlay">
+                        <div class="view-count" id="viewCount">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                            </svg>
+                            <span>0 views</span>
+                        </div>
+                        <div class="time-remaining" id="timeRemaining">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M15,1H9V3H15M11,14H13V8H11M19.03,7.39L20.45,5.97C20,5.46 19.55,5 19.04,4.56L17.62,6C16.07,4.74 14.12,4 12,4A9,9 0 0,0 3,13A9,9 0 0,0 12,22C17,22 21,17.97 21,13C21,10.88 20.26,8.93 19.03,7.39Z"/>
+                            </svg>
+                            <span>24h remaining</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Already Rated State -->
+                <div class="already-rated" id="alreadyRated" style="display: none;">
+                    <div class="rated-icon">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                        </svg>
+                    </div>
+                    <h3>Thanks for rating!</h3>
+                    <p>You've already rated this photo. Check out the current results:</p>
+                    
+                    <div class="results-preview">
+                        <div class="rating-summary">
+                            <div class="average-rating" id="averageRating">
+                                <span class="rating-number">0</span>
+                                <div class="rating-hearts" id="averageHearts"></div>
+                            </div>
+                            <div class="total-ratings" id="totalRatings">
+                                <span>0 ratings</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rating Form -->
+                <div class="rating-form" id="ratingForm">
+                    <div class="rating-prompt">
+                        <h2>Rate this photo</h2>
+                        <p>Give an anonymous rating with love! 💜</p>
+                    </div>
+
+                    <!-- Love Rating System -->
+                    <div class="love-rating">
+                        <div class="rating-levels">
+                            <button class="rating-btn" data-rating="1" aria-label="1 heart - Okay">
+                                <div class="heart">🤍</div>
+                                <span class="rating-label">Okay</span>
+                            </button>
+                            <button class="rating-btn" data-rating="2" aria-label="2 hearts - Nice">
+                                <div class="heart">💙</div>
+                                <span class="rating-label">Nice</span>
+                            </button>
+                            <button class="rating-btn" data-rating="3" aria-label="3 hearts - Great">
+                                <div class="heart">💚</div>
+                                <span class="rating-label">Great</span>
+                            </button>
+                            <button class="rating-btn" data-rating="4" aria-label="4 hearts - Amazing">
+                                <div class="heart">🧡</div>
+                                <span class="rating-label">Amazing</span>
+                            </button>
+                            <button class="rating-btn" data-rating="5" aria-label="5 hearts - Perfect">
+                                <div class="heart">💜</div>
+                                <span class="rating-label">Perfect</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Quick Reactions -->
+                    <div class="quick-reactions">
+                        <h3>Quick reactions (optional)</h3>
+                        <div class="reaction-buttons">
+                            <button class="reaction-btn" data-reaction="fire">🔥 Fire</button>
+                            <button class="reaction-btn" data-reaction="stunning">✨ Stunning</button>
+                            <button class="reaction-btn" data-reaction="nice">👌 Nice</button>
+                            <button class="reaction-btn" data-reaction="strong">💪 Strong</button>
+                            <button class="reaction-btn" data-reaction="gorgeous">😍 Gorgeous</button>
+                            <button class="reaction-btn" data-reaction="creative">🎨 Creative</button>
+                        </div>
+                    </div>
+
+                    <!-- Comment Section -->
+                    <div class="comment-section" id="commentSection">
+                        <h3>Leave a comment (optional)</h3>
+                        <textarea 
+                            id="commentText" 
+                            placeholder="Leave a positive, anonymous comment..."
+                            maxlength="200"
+                        ></textarea>
+                        <div class="char-count">
+                            <span id="charCount">0</span>/200
+                        </div>
+                        <div class="comment-guidelines">
+                            <p>💜 Keep it positive and respectful!</p>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="submit-section">
+                        <button class="submit-btn" id="submitRating" disabled>
+                            <span>Submit Rating</span>
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Success State -->
+                <div class="success-state" id="successState" style="display: none;">
+                    <div class="success-animation">
+                        <div class="success-hearts">💜✨💜</div>
+                        <h2>Rating Submitted!</h2>
+                        <p>Thank you for your anonymous feedback</p>
+                    </div>
+                    
+                    <div class="final-results">
+                        <h3>Updated Results:</h3>
+                        <div class="results-display">
+                            <div class="new-average" id="newAverage">
+                                <span class="rating-number">0</span>
+                                <div class="rating-hearts" id="newAverageHearts"></div>
+                            </div>
+                            <div class="new-total" id="newTotal">
+                                <span>0 total ratings</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="final-actions">
+                        <button class="btn secondary" onclick="window.location.href='rate-me.html'">
+                            Rate Another Photo
+                        </button>
+                        <button class="btn primary" onclick="window.location.href='index.html'">
+                            Go Home
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Guidelines Modal -->
+        <div class="modal" id="guidelinesModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Rating Guidelines</h3>
+                    <button class="close-btn" id="closeGuidelines">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="guideline-item">
+                        <div class="guideline-icon">💜</div>
+                        <div class="guideline-text">
+                            <h4>Be Positive</h4>
+                            <p>Focus on uplifting and constructive feedback</p>
+                        </div>
+                    </div>
+                    <div class="guideline-item">
+                        <div class="guideline-icon">🤝</div>
+                        <div class="guideline-text">
+                            <h4>Be Respectful</h4>
+                            <p>Treat others how you'd want to be treated</p>
+                        </div>
+                    </div>
+                    <div class="guideline-item">
+                        <div class="guideline-icon">🚫</div>
+                        <div class="guideline-text">
+                            <h4>No Harassment</h4>
+                            <p>Bullying, hate speech, or inappropriate comments will be removed</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn primary" id="understoodBtn">I Understand</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Report Modal -->
+        <div class="modal" id="reportModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Report Content</h3>
+                    <button class="close-btn" id="closeReport">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>Why are you reporting this content?</p>
+                    <div class="report-options">
+                        <label class="report-option">
+                            <input type="radio" name="reportReason" value="inappropriate">
+                            <span>Inappropriate content</span>
+                        </label>
+                        <label class="report-option">
+                            <input type="radio" name="reportReason" value="nudity">
+                            <span>Nudity or sexual content</span>
+                        </label>
+                        <label class="report-option">
+                            <input type="radio" name="reportReason" value="harassment">
+                            <span>Harassment or bullying</span>
+                        </label>
+                        <label class="report-option">
+                            <input type="radio" name="reportReason" value="spam">
+                            <span>Spam or fake content</span>
+                        </label>
+                        <label class="report-option">
+                            <input type="radio" name="reportReason" value="other">
+                            <span>Other</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn secondary" id="cancelReport">Cancel</button>
+                    <button class="btn primary" id="submitReport">Submit Report</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="loading-spinner">
+                <div class="spinner-ring"></div>
+                <p>Submitting your rating...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script type="module" src="js/firebase-config.js"></script>
+    <script type="module" src="js/rate-me-view.js"></script>
+</body>
+</html>

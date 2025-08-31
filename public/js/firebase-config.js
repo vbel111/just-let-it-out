@@ -1,11 +1,11 @@
 // Firebase Configuration
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js"
 import {
   getAuth,
   signInAnonymously,
   onAuthStateChanged,
   updateProfile,
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js"
 import {
   getFirestore,
   collection,
@@ -23,7 +23,7 @@ import {
   deleteDoc,
   where,
   increment,
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js"
 import {
   getDatabase,
   ref,
@@ -33,13 +33,16 @@ import {
   query as rtdbQuery,
   orderByChild,
   limitToLast,
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js"
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js"
 import {
   getStorage,
   ref as storageRef,
   uploadBytes,
   getDownloadURL,
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js"
+  deleteObject,
+  uploadBytesResumable,
+  getMetadata,
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js"
 
 // Firebase configuration object
 const firebaseConfig = {
@@ -95,6 +98,9 @@ export {
   storageRef,
   uploadBytes,
   getDownloadURL,
+  deleteObject,
+  uploadBytesResumable,
+  getMetadata,
 }
 
 // Authentication state management
@@ -585,3 +591,123 @@ export const formatTimestamp = (timestamp) => {
     return '';
   }
 }
+
+// Rate Me specific helper functions
+export const uploadRateMePhoto = async (file, photoId, onProgress = null) => {
+  try {
+    const photoRef = storageRef(storage, `rate-me-photos/${photoId}`);
+    
+    if (onProgress) {
+      // Use resumable upload for progress tracking
+      const uploadTask = uploadBytesResumable(photoRef, file);
+      
+      return new Promise((resolve, reject) => {
+        uploadTask.on('state_changed', 
+          (snapshot) => {
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            onProgress(progress);
+          }, 
+          (error) => reject(error),
+          async () => {
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+            resolve(downloadURL);
+          }
+        );
+      });
+    } else {
+      // Simple upload
+      const snapshot = await uploadBytes(photoRef, file);
+      return await getDownloadURL(snapshot.ref);
+    }
+  } catch (error) {
+    console.error("Error uploading Rate Me photo:", error);
+    throw error;
+  }
+};
+
+export const deleteRateMePhoto = async (photoId) => {
+  try {
+    const photoRef = storageRef(storage, `rate-me-photos/${photoId}`);
+    await deleteObject(photoRef);
+    console.log(`Photo ${photoId} deleted successfully`);
+  } catch (error) {
+    if (error.code === 'storage/object-not-found') {
+      console.log(`Photo ${photoId} not found in storage (may have been already deleted)`);
+    } else {
+      console.error("Error deleting Rate Me photo:", error);
+      throw error;
+    }
+  }
+};
+
+export const getRateMePhotoMetadata = async (photoId) => {
+  try {
+    const photoRef = storageRef(storage, `rate-me-photos/${photoId}`);
+    return await getMetadata(photoRef);
+  } catch (error) {
+    console.error("Error getting photo metadata:", error);
+    throw error;
+  }
+};
+
+// Enhanced Rate Me post creation
+export const createRateMePost = async (postData) => {
+  try {
+    const docRef = await addDoc(collection(db, 'rateMePosts'), {
+      ...postData,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+      status: 'active',
+      stats: {
+        viewCount: 0,
+        totalRatings: 0,
+        averageRating: 0,
+        totalComments: 0,
+        ratingBreakdown: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
+      }
+    });
+    
+    console.log("Rate Me post created with ID:", docRef.id);
+    return docRef.id;
+  } catch (error) {
+    console.error("Error creating Rate Me post:", error);
+    throw error;
+  }
+};
+
+// Enhanced rating submission
+export const submitRating = async (ratingData) => {
+  try {
+    // Add the rating
+    const ratingRef = await addDoc(collection(db, 'rateMeRatings'), {
+      ...ratingData,
+      timestamp: serverTimestamp()
+    });
+
+    // Update post statistics
+    const postRef = doc(db, 'rateMePosts', ratingData.postId);
+    const postDoc = await getDoc(postRef);
+    
+    if (postDoc.exists()) {
+      const currentStats = postDoc.data().stats || {};
+      const currentTotal = currentStats.totalRatings || 0;
+      const currentAvg = currentStats.averageRating || 0;
+      
+      const newTotal = currentTotal + 1;
+      const newAvg = ((currentAvg * currentTotal) + ratingData.rating) / newTotal;
+      
+      await updateDoc(postRef, {
+        'stats.totalRatings': newTotal,
+        'stats.averageRating': Math.round(newAvg * 10) / 10,
+        [`stats.ratingBreakdown.${ratingData.rating}`]: increment(1),
+        'stats.totalComments': ratingData.comment ? increment(1) : currentStats.totalComments || 0,
+        updatedAt: serverTimestamp()
+      });
+    }
+
+    return ratingRef.id;
+  } catch (error) {
+    console.error("Error submitting rating:", error);
+    throw error;
+  }
+};
