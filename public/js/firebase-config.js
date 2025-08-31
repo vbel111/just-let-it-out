@@ -45,16 +45,21 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js"
 
 // Firebase configuration object
-// These values are loaded from environment variables with fallbacks
+// These values MUST be set as environment variables in Vercel dashboard
 const firebaseConfig = {
-  apiKey: (typeof import.meta !== 'undefined' && import.meta.env?.VITE_FIREBASE_API_KEY) || "AIzaSyC38AD0tCNl7k5gtW7JsUAD7m00FCKuQfs",
-  authDomain: (typeof import.meta !== 'undefined' && import.meta.env?.VITE_FIREBASE_AUTH_DOMAIN) || "justletitout-d4f47.firebaseapp.com",
-  databaseURL: (typeof import.meta !== 'undefined' && import.meta.env?.VITE_FIREBASE_DATABASE_URL) || "https://justletitout-d4f47-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: (typeof import.meta !== 'undefined' && import.meta.env?.VITE_FIREBASE_PROJECT_ID) || "justletitout-d4f47",
-  storageBucket: (typeof import.meta !== 'undefined' && import.meta.env?.VITE_FIREBASE_STORAGE_BUCKET) || "justletitout-d4f47.firebasestorage.app",
-  messagingSenderId: (typeof import.meta !== 'undefined' && import.meta.env?.VITE_FIREBASE_MESSAGING_SENDER_ID) || "551225449276",
-  appId: (typeof import.meta !== 'undefined' && import.meta.env?.VITE_FIREBASE_APP_ID) || "1:551225449276:web:5487e25f8504ba8bd69c39",
-  measurementId: (typeof import.meta !== 'undefined' && import.meta.env?.VITE_FIREBASE_MEASUREMENT_ID) || "G-0FGR52MSR4",
+  apiKey: process.env.VITE_FIREBASE_API_KEY || import.meta?.env?.VITE_FIREBASE_API_KEY,
+  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN || import.meta?.env?.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: process.env.VITE_FIREBASE_DATABASE_URL || import.meta?.env?.VITE_FIREBASE_DATABASE_URL,
+  projectId: process.env.VITE_FIREBASE_PROJECT_ID || import.meta?.env?.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET || import.meta?.env?.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID || import.meta?.env?.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.VITE_FIREBASE_APP_ID || import.meta?.env?.VITE_FIREBASE_APP_ID,
+  measurementId: process.env.VITE_FIREBASE_MEASUREMENT_ID || import.meta?.env?.VITE_FIREBASE_MEASUREMENT_ID,
+}
+
+// Validate that all required config values are present
+if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+  throw new Error('Firebase configuration is missing. Please set environment variables in Vercel dashboard.');
 }
 
 // Initialize Firebase
