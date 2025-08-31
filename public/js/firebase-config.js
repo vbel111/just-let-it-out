@@ -47,6 +47,18 @@ import {
   getMetadata,
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js"
 // Initialize Firebase
+// NOTE: replace the placeholder values below with your real Firebase project config
+const firebaseConfig = {
+  apiKey: "AIzaSyC38AD0tCNl7k5gtW7JsUAD7m00FCKuQfs",
+  authDomain: "justletitout-d4f47.firebaseapp.com",
+  databaseURL: "https://justletitout-d4f47-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "justletitout-d4f47",
+  storageBucket: "justletitout-d4f47.firebasestorage.app",
+  messagingSenderId: "551225449276",
+  appId: "1:551225449276:web:5487e25f8504ba8bd69c39",
+  measurementId: "G-0FGR52MSR4"
+}
+
 const app = initializeApp(firebaseConfig)
 
 // Initialize Firebase services
