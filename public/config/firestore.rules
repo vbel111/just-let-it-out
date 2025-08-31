@@ -1,14 +1,18 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow anonymous users to read and write posts
+    // Allow anyone to read posts, only authenticated users can create
     match /posts/{document} {
-      allow read, write: if request.auth != null;
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null && request.auth.uid == resource.data.uid;
     }
     
-    // Allow anonymous users to read and write chat rooms
+    // Allow anyone to read chat rooms, only authenticated users can create
     match /chatRooms/{document} {
-      allow read, write: if request.auth != null;
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null && request.auth.uid == resource.data.ownerUid;
     }
     
     // Allow users to read and write their own user data
@@ -16,26 +20,25 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
     
-    // Allow anonymous users to manage pairing queue
+    // Allow only authenticated users to manage pairing queue
     match /pairingQueue/{document} {
       allow read, write: if request.auth != null;
     }
     
-    // Allow anonymous users to manage chat sessions
+    // Allow only authenticated users to manage chat sessions
     match /chatSessions/{sessionId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null;
-      allow create: if request.auth != null;
-      
+      allow read, write, create: if request.auth != null && request.auth.uid == resource.data.participantUid;
       // Allow reading and writing messages within chat sessions
       match /messages/{messageId} {
-        allow read, write: if request.auth != null;
+        allow read, write: if request.auth != null && request.auth.uid == resource.data.senderUid;
       }
     }
     
-    // Stories collection
+    // Allow anyone to read stories, only authenticated users can create
     match /stories/{document} {
-      allow read, write: if request.auth != null;
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null && request.auth.uid == resource.data.uid;
     }
     
     // Story comments

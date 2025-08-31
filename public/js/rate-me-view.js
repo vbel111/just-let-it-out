@@ -212,9 +212,13 @@ class RatingViewApp {
     const views = postData.stats.viewCount || 0;
     viewCount.querySelector('span').textContent = `${views} view${views !== 1 ? 's' : ''}`;
     
-    // Show/hide comment section based on settings
-    if (!postData.settings.allowComments) {
+    // Show/hide comment section based on settings (fallback: always show if undefined)
+    if (postData.settings && postData.settings.allowComments === false) {
       commentSection.style.display = 'none';
+      commentText.disabled = true;
+    } else {
+      commentSection.style.display = '';
+      commentText.disabled = false;
     }
   }
 

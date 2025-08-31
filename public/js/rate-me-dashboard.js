@@ -90,6 +90,40 @@ const cancelDelete = document.getElementById('cancelDelete');
 
 // Dashboard App Class
 class RateMeDashboard {
+  async clearAllUserData() {
+    if (!currentUser) return;
+    if (!confirm('Are you sure you want to permanently delete all your photos, ratings, and data? This cannot be undone.')) return;
+    this.showLoading(true);
+    try {
+      // Delete all user's photos
+      const photosQuery = query(
+        collection(db, 'rateMePosts'),
+        where('uploaderId', '==', currentUser.uid)
+      );
+      const photosSnapshot = await getDocs(photosQuery);
+      for (const photoDoc of photosSnapshot.docs) {
+        await deleteDoc(photoDoc.ref);
+        // Optionally delete photo from storage if needed
+        // try { await deleteRateMePhoto(photoDoc.id); } catch (e) { /* ignore */ }
+      }
+      // Delete all user's ratings
+      const ratingsQuery = query(
+        collection(db, 'rateMeRatings'),
+        where('raterUid', '==', currentUser.uid)
+      );
+      const ratingsSnapshot = await getDocs(ratingsQuery);
+      for (const ratingDoc of ratingsSnapshot.docs) {
+        await deleteDoc(ratingDoc.ref);
+      }
+      // Optionally: delete user profile data if you store it
+      this.showToast('All your data has been deleted.', 'success');
+      await this.loadUserData();
+    } catch (error) {
+      console.error('Error clearing data:', error);
+      this.showToast('Failed to clear your data', 'error');
+    }
+    this.showLoading(false);
+  }
   constructor() {
     this.init();
   }
@@ -556,6 +590,13 @@ class RateMeDashboard {
   }
 
   setupEventListeners() {
+    // Clear All Data button
+    const clearDataBtn = document.getElementById('clearDataBtn');
+    if (clearDataBtn) {
+      clearDataBtn.addEventListener('click', () => {
+        this.clearAllUserData();
+      });
+    }
     // Navigation
     backBtn.addEventListener('click', () => {
       window.history.back();
