@@ -26,6 +26,26 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js"
 // Export Firestore function aliases for compatibility
 export { firestoreQuery as query, firestoreOrderBy as orderBy, firestoreLimit as limit };
+import {
+  getDatabase,
+  ref,
+  push,
+  onValue,
+  serverTimestamp as rtdbServerTimestamp,
+  query as rtdbQuery,
+  orderByChild,
+  limitToLast,
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js"
+
+import {
+  getStorage,
+  ref as storageRef,
+  uploadBytes,
+  getDownloadURL,
+  deleteObject,
+  uploadBytesResumable,
+  getMetadata,
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js"
 // Initialize Firebase
 const app = initializeApp(firebaseConfig)
 
