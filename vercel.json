@@ -1,5 +1,5 @@
 {
-  "buildCommand": "./build.sh",
+  "buildCommand": "npm run build",
   "outputDirectory": "public",
   "headers": [
     {

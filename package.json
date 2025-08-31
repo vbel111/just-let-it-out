@@ -1,4 +1,10 @@
 {
+  "name": "just-let-it-out",
+  "version": "1.0.0",
+  "description": "Anonymous sharing platform",
+  "scripts": {
+    "build": "node build.js"
+  },
   "dependencies": {
     "firebase": "^11.10.0",
     "qrcode": "^1.5.4",
