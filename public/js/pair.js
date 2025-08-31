@@ -1,23 +1,9 @@
-// Import Firebase modules
-import { auth, db } from './firebase-config.js';
-import { 
-  onAuthStateChanged, 
-  signInAnonymously 
-} from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-import { 
-  doc, 
-  collection, 
-  addDoc, 
-  deleteDoc, 
-  onSnapshot, 
-  query, 
-  where, 
-  orderBy, 
-  limit, 
-  serverTimestamp,
-  updateDoc,
-  getDocs
-} from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+// Import all Firebase modules from local config for consistent app context
+import {
+  auth, db,
+  onAuthStateChanged, signInAnonymously,
+  doc, collection, addDoc, deleteDoc, onSnapshot, query, where, orderBy, limit, serverTimestamp, updateDoc, getDocs
+} from './firebase-config.js';
 
 // Analytics tracking
 const analytics = {
