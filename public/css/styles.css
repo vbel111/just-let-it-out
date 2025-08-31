@@ -570,6 +570,52 @@ body {
   box-shadow: 0 25px 50px rgba(102, 126, 234, 0.4);
 }
 
+/* Rate Me Card Specific Styling */
+.feature-card.rate-me {
+  background: linear-gradient(135deg, #f472b6 0%, #8b5cf6 100%);
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+.feature-card.rate-me .card-icon {
+  position: relative;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.feature-card.rate-me .love-overlay {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  font-size: 18px;
+  animation: lovePulse 2s ease-in-out infinite;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+
+.feature-card.rate-me:hover {
+  transform: scale(1.05);
+  box-shadow: 0 25px 50px rgba(244, 114, 182, 0.4);
+}
+
+.feature-card.rate-me::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+  transform: rotate(45deg);
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+  50% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+  100% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+}
+
 /* Card badge */
 .card-badge {
   position: absolute;
