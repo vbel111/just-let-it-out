@@ -1,4 +1,6 @@
 {
+  "buildCommand": "./build.sh",
+  "outputDirectory": "public",
   "headers": [
     {
       "source": "/(.*)",
@@ -21,11 +23,7 @@
   "rewrites": [
     {
       "source": "/",
-      "destination": "/public/index.html"
-    },
-    {
-      "source": "/((?!public).*)",
-      "destination": "/public/$1"
+      "destination": "/index.html"
     }
   ]
 }

@@ -2,7 +2,7 @@
 
 ## Vercel Environment Variables
 
-Before deploying to Vercel, you must set the following environment variables in your Vercel project dashboard:
+This project uses a secure build-time injection system for Firebase configuration.
 
 ### Required Environment Variables:
 
@@ -21,15 +21,21 @@ VITE_FIREBASE_MEASUREMENT_ID=your_measurement_id
 ```
 
 3. Set the environment for: **Production**, **Preview**, and **Development**
-4. Redeploy your project after adding the variables
 
-## Security Notes:
+### How It Works:
 
-- Never commit your `.env` file to git
-- The source code no longer contains hardcoded API keys
-- Environment variables are injected at build time by Vercel
-- If environment variables are missing, the app will throw an error instead of using fallback values
+1. **Source Code**: Contains placeholder tokens (`%VITE_FIREBASE_API_KEY%`) instead of real keys
+2. **Build Process**: Vercel runs `build.sh` which replaces placeholders with actual environment variables
+3. **Security**: No sensitive data is ever committed to git or visible in source code
+4. **Validation**: Build fails if environment variables are missing
 
-## Local Development:
+### Local Development:
 
-Copy `.env.example` to `.env` and fill in your Firebase configuration values for local development.
+For local development, copy `.env.example` to `.env` and fill in your Firebase configuration values.
+
+## Security Benefits:
+
+- ✅ No hardcoded API keys in source code
+- ✅ Environment variables injected only at build time
+- ✅ Build fails if configuration is missing
+- ✅ Source code is completely safe to commit publicly

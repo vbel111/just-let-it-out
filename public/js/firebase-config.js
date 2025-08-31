@@ -45,19 +45,22 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js"
 
 // Firebase configuration object
-// These values MUST be set as environment variables in Vercel dashboard
+// Environment variables are injected by Vercel at build time
 const firebaseConfig = {
-  apiKey: process.env.VITE_FIREBASE_API_KEY || import.meta?.env?.VITE_FIREBASE_API_KEY,
-  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN || import.meta?.env?.VITE_FIREBASE_AUTH_DOMAIN,
-  databaseURL: process.env.VITE_FIREBASE_DATABASE_URL || import.meta?.env?.VITE_FIREBASE_DATABASE_URL,
-  projectId: process.env.VITE_FIREBASE_PROJECT_ID || import.meta?.env?.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET || import.meta?.env?.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID || import.meta?.env?.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.VITE_FIREBASE_APP_ID || import.meta?.env?.VITE_FIREBASE_APP_ID,
-  measurementId: process.env.VITE_FIREBASE_MEASUREMENT_ID || import.meta?.env?.VITE_FIREBASE_MEASUREMENT_ID,
+  apiKey: "%VITE_FIREBASE_API_KEY%",
+  authDomain: "%VITE_FIREBASE_AUTH_DOMAIN%",
+  databaseURL: "%VITE_FIREBASE_DATABASE_URL%",
+  projectId: "%VITE_FIREBASE_PROJECT_ID%",
+  storageBucket: "%VITE_FIREBASE_STORAGE_BUCKET%",
+  messagingSenderId: "%VITE_FIREBASE_MESSAGING_SENDER_ID%",
+  appId: "%VITE_FIREBASE_APP_ID%",
+  measurementId: "%VITE_FIREBASE_MEASUREMENT_ID%",
 }
 
-// Validate that all required config values are present
+// Validate configuration
+if (!firebaseConfig.apiKey || firebaseConfig.apiKey.includes('%')) {
+  throw new Error('Firebase configuration not properly injected. Please check Vercel environment variables.');
+}
 if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
   throw new Error('Firebase configuration is missing. Please set environment variables in Vercel dashboard.');
 }
